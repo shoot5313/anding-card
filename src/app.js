@@ -16,17 +16,29 @@
   var cacheTimer = null;
   var navigating = false;
 
-  var DEFAULT_WORDS = [
+  var LEGACY_DEFAULT_WORDS = [
     "怕也没关系，不用把它赶走。",
     "这些感觉很难受，但感觉不是命令。",
     "先把这一分钟交给时间；下一分钟来了，再过下一分钟。",
   ];
 
+  var DEFAULT_WORDS = [
+    "那又怎样？",
+    "我以前都挺过去了，这次也会的。",
+    "我能处理。按照自己的步调，一次一小步。",
+  ];
+
+  var LIVED_EXTRA_WORDS = [
+    "我正在学着与焦虑和恐惧做朋友。",
+    "惊恐，来吧。你可以在这里，我也在这里。",
+    "来吧，惊恐。你就这点本事吗？",
+  ];
+
   var DEFAULT_DRAFT = {
-    anchor: "窗台上的绿萝",
-    scenePlace: "靠窗的沙发上",
-    sceneTemperature: "空气微凉",
-    sceneSound: "雨落在遮雨棚上",
+    anchor: "",
+    scenePlace: "",
+    sceneTemperature: "",
+    sceneSound: "",
     words: DEFAULT_WORDS.slice(),
     actions: {
       breathe: true,
@@ -45,37 +57,37 @@
 
   var GROUNDING_POOLS = {
     see: [
-      { sense: "看见", prompt: "找一样有直边的东西。用手指指向它。", button: "找到了" },
-      { sense: "看见", prompt: "找一样圆的，或带弧线的东西。", button: "找到了" },
-      { sense: "看见", prompt: "找一个上面有字的地方。读出最短的词。", button: "读出来了" },
-      { sense: "看见", prompt: "找两样颜色不同的东西。说出两种颜色。", button: "说出来了" },
-      { sense: "看见", prompt: "先找最远的一样东西，再找最近的一样。", button: "都找到了" },
-      { sense: "看见", prompt: "找一个影子、亮点或反光。", button: "找到了" },
-      { sense: "看见", prompt: "找一样比手掌小的东西。", button: "找到了" },
-      { sense: "看见", prompt: "扫一眼四周，找一样能移动的东西。", button: "找到了" },
+      { sense: "看见", prompt: "找一样有直边的东西。它是什么？", button: "找到了" },
+      { sense: "看见", prompt: "找一样圆的，或带弧线的东西。它是什么？", button: "找到了" },
+      { sense: "看见", prompt: "找一个上面有字的地方。最短的词是什么？", button: "找到了" },
+      { sense: "看见", prompt: "找两样颜色不同的东西。是哪两种颜色？", button: "找到了" },
+      { sense: "看见", prompt: "先看最远的一样，再看最近的一样。写下其中一个。", button: "都找到了" },
+      { sense: "看见", prompt: "找一个影子、亮点或反光。它落在哪里？", button: "找到了" },
+      { sense: "看见", prompt: "找一样比手掌小的东西。它是什么？", button: "找到了" },
+      { sense: "看见", prompt: "扫一眼四周，找一样能移动的东西。它是什么？", button: "找到了" },
     ],
     touch: [
-      { sense: "触碰", prompt: "摸一样有纹理的东西，停三秒。说出它粗还是细。", button: "摸过了" },
-      { sense: "触碰", prompt: "碰一下身边的东西。说出它比手背凉还是暖。", button: "说出来了" },
-      { sense: "触碰", prompt: "用脚踩一下地面。说出它硬还是软。", button: "踩到了" },
-      { sense: "触碰", prompt: "捏一下衣角。留意它薄、厚、软，还是硬。", button: "留意到了" },
+      { sense: "触碰", prompt: "摸一样有纹理的东西，停三秒。是什么手感？", button: "摸过了" },
+      { sense: "触碰", prompt: "碰一下身边的东西。它比手背凉还是暖？", button: "碰到了" },
+      { sense: "触碰", prompt: "用脚踩一下地面。它硬还是软？", button: "踩到了" },
+      { sense: "触碰", prompt: "捏一下衣角。它是薄、厚、软，还是硬？", button: "碰到了" },
       { sense: "触碰", prompt: "把掌心压在身边的平面上，停三秒。", button: "压住了" },
       { sense: "触碰", prompt: "找一个边角，用手指沿着它走一小段。", button: "走完了" },
     ],
     hear: [
-      { sense: "听见", prompt: "找一个最远的声音。说出它从哪里来。", button: "听到了" },
+      { sense: "听见", prompt: "找一个最远的声音。它从哪里来？", button: "听到了" },
       { sense: "听见", prompt: "找一个持续着的声音。跟着它听三秒。", button: "听过了" },
       { sense: "听见", prompt: "找一个来自左边或右边的声音。", button: "找到了" },
-      { sense: "听见", prompt: "说出你现在所在的地方。听一听自己的声音。", button: "说出来了" },
+      { sense: "听见", prompt: "写下你现在所在的地方。再听一听自己的声音。", button: "听到了" },
       { sense: "听见", prompt: "找一个刚才没留意到的小声音。", button: "找到了" },
     ],
     smell: [
-      { sense: "闻到", prompt: "找一种气味。没有明显气味，也把“没有”说出来。", button: "说出来了" },
-      { sense: "闻到", prompt: "闻一下衣袖或手边的东西。说出它像什么。", button: "闻过了" },
+      { sense: "闻到", prompt: "找一种气味。没有明显气味，也可以写“没有”。", button: "闻过了" },
+      { sense: "闻到", prompt: "闻一下衣袖或手边的东西。它像什么？", button: "闻过了" },
       { sense: "闻到", prompt: "留意这一口气经过鼻尖时，有没有气味。", button: "留意了" },
     ],
     taste: [
-      { sense: "尝到", prompt: "留意嘴里现在的味道。说不出来，也说一声“说不出来”。", button: "说过了" },
+      { sense: "尝到", prompt: "留意嘴里现在的味道。说不出来，也可以写“没有”。", button: "留意了" },
       { sense: "尝到", prompt: "动一下舌头，找一个最明显的味道。没有也算。", button: "找过了" },
     ],
   };
@@ -128,13 +140,21 @@
     position: "",
     groundIndex: 0,
     groundSteps: createGroundingRun(),
+    groundUsedPrompts: [],
+    groundAnswers: [],
     waitStartedAt: null,
     waitAcknowledged: false,
+    waitSupportIndex: -1,
+    supportWordIndex: 0,
     tracePath: randomTracePath(),
     draft: loadDraft(),
     cardDataUrl: "",
     cardSaved: false,
   };
+
+  state.groundUsedPrompts = state.groundSteps.map(function (step) {
+    return step.prompt;
+  });
 
   function cloneDefaultDraft() {
     return {
@@ -195,10 +215,33 @@
     };
   }
 
+  function sameWords(left, right) {
+    if (!Array.isArray(left) || left.length !== right.length) return false;
+    for (var index = 0; index < right.length; index += 1) {
+      if (left[index] !== right[index]) return false;
+    }
+    return true;
+  }
+
+  function migrateLegacyDefaults(draft) {
+    var hasLegacyMemoryExample = draft.anchor === "窗台上的绿萝"
+      && draft.scenePlace === "靠窗的沙发上"
+      && draft.sceneTemperature === "空气微凉"
+      && draft.sceneSound === "雨落在遮雨棚上";
+    if (hasLegacyMemoryExample) {
+      draft.anchor = DEFAULT_DRAFT.anchor;
+      draft.scenePlace = DEFAULT_DRAFT.scenePlace;
+      draft.sceneTemperature = DEFAULT_DRAFT.sceneTemperature;
+      draft.sceneSound = DEFAULT_DRAFT.sceneSound;
+    }
+    if (sameWords(draft.words, LEGACY_DEFAULT_WORDS)) draft.words = DEFAULT_WORDS.slice();
+    return draft;
+  }
+
   function loadDraft() {
     try {
       var saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) return normalizeDraft(JSON.parse(saved));
+      if (saved) return migrateLegacyDefaults(normalizeDraft(JSON.parse(saved)));
     } catch (error) {
       return cloneDefaultDraft();
     }
@@ -258,6 +301,8 @@
       height = window.visualViewport.height;
     }
     document.documentElement.style.setProperty("--app-height", Math.round(height) + "px");
+    var answerFocused = document.activeElement && document.activeElement.id === "ground-answer";
+    document.documentElement.classList.toggle("ground-keyboard-open", Boolean(answerFocused && height < 520));
   }
 
   function navigate(route, immediate) {
@@ -332,7 +377,7 @@
       '<div class="emergency-button-wrap">',
       '<button class="emergency-button" type="button" data-action="start">我现在<br>很难受</button>',
       "</div>",
-      '<p class="home-note">不需要先读说明。按下去，一次只做一件事。</p>',
+      '<p class="home-note">我也经历过惊恐。现在不用读说明，按下去，一次只做一件事。</p>',
       '<div class="home__secondary">',
       '<button class="secondary-button" type="button" data-action="prepare">现在还好，先准备</button>',
       '<button class="text-button" type="button" data-action="understand">先了解一下</button>',
@@ -348,7 +393,7 @@
       flowNav("先看最响的一个", true),
       '<div class="screen-calm__body">',
       '<h1 class="choice-title">现在最抢注意力的是哪一种？</h1>',
-      '<p class="support-copy">不用判断原因。选最像的一项就行。</p>',
+      '<p class="support-copy">不用找一个准确的名字。哪个最响，就先告诉我哪个。</p>',
       '<div class="choice-grid">',
       '<button class="choice-button" type="button" data-action="choose-need" data-need="heart"><span>心跳很快</span><small>身体反应很响</small></button>',
       '<button class="choice-button" type="button" data-action="choose-need" data-need="breath"><span>呼吸很乱</span><small>总觉得吸不够</small></button>',
@@ -418,8 +463,30 @@
     var body = [
       '<h1 class="display-title">', escapeHtml(title), "</h1>",
       '<p class="support-copy">', escapeHtml(copy), "</p>",
+      renderLivedVoice(),
     ].join("");
     return calmScreen("接受", body, "我先让它在这儿", "next", "ground");
+  }
+
+  function supportWordsForCurrentRun() {
+    return currentWords().concat(LIVED_EXTRA_WORDS);
+  }
+
+  function currentSupportWord() {
+    var words = supportWordsForCurrentRun();
+    return words[state.supportWordIndex % words.length];
+  }
+
+  function renderLivedVoice() {
+    return [
+      '<aside class="lived-voice">',
+      '<span class="lived-voice__label">我以前也在这种时候，这样对自己说</span>',
+      '<p class="lived-voice__word" id="lived-support-word">“',
+      escapeHtml(currentSupportWord()),
+      '”</p>',
+      '<button class="lived-voice__swap" type="button" data-action="support-swap">换一句</button>',
+      "</aside>",
+    ].join("");
   }
 
   function renderBreathe() {
@@ -445,6 +512,7 @@
 
   function renderGround() {
     var step = state.groundSteps[state.groundIndex] || state.groundSteps[0];
+    var answerEcho = groundingAnswerEcho();
     var body = [
       '<div class="grounding-object grounding-object--',
       groundingVisualClass(step.sense),
@@ -452,13 +520,27 @@
       '<span class="grounding-sense" id="grounding-sense">',
       escapeHtml(step.sense),
       "</span>",
-      '<h1 class="grounding-prompt" id="grounding-prompt">',
+      '<h1 class="grounding-prompt" id="grounding-prompt" aria-live="polite">',
       escapeHtml(step.prompt),
       "</h1>",
-      '<p class="support-copy">把注意力借给眼前一小会儿。</p>',
+      '<div class="grounding-answer-wrap">',
+      '<label class="visually-hidden" for="ground-answer">写下你找到的答案</label>',
+      '<input class="grounding-answer" id="ground-answer" type="text" maxlength="16" autocomplete="off" autocapitalize="off" enterkeyhint="done" spellcheck="false" placeholder="',
+      escapeHtml(groundingAnswerPlaceholder(step.sense)),
+      '">',
+      '<p class="grounding-answer-echo" id="ground-answer-echo" aria-live="polite">',
+      escapeHtml(answerEcho),
+      "</p>",
+      "</div>",
     ].join("");
-    var secondary = '<button class="quiet-link" type="button" data-action="skip" data-next="wait">跳过这步</button>';
-    return calmScreen("落地", body, step.button, "ground-next", "", secondary);
+    var secondary = [
+      '<div class="grounding-secondary">',
+      '<button class="quiet-link" type="button" data-action="ground-swap" aria-label="当前任务不合适，换一个同类任务">换一个</button>',
+      '<button class="quiet-link" type="button" data-action="skip" data-next="wait">跳过这步</button>',
+      "</div>",
+    ].join("");
+    return calmScreen("落地", body, step.button, "ground-next", "", secondary)
+      .replace("screen screen-calm", "screen screen-calm screen-ground");
   }
 
   function elapsedWaitSeconds() {
@@ -489,6 +571,9 @@
   function renderWait() {
     if (!state.waitStartedAt) state.waitStartedAt = Date.now();
     var seconds = elapsedWaitSeconds();
+    var recentAnswers = state.groundAnswers.slice(-3).map(function (entry) {
+      return entry.answer;
+    }).join(" · ");
     var body = [
       '<div class="wait-stage">',
       '<div class="wait-elapsed">已经过去 <span id="wait-timer" aria-label="已经过去 ',
@@ -506,15 +591,33 @@
       '<p class="trace-hint" id="wait-trace-copy" aria-live="polite">用手指跟着亮点走。跟丢也没关系。</p>',
       "</div>",
       "</div>",
+      recentAnswers ? '<p class="grounding-recall">刚才你真的找到过：' + escapeHtml(recentAnswers) + "</p>" : "",
       '<h1 class="wait-copy" id="wait-copy">',
       escapeHtml(waitMessageFor(seconds)),
       "</h1>",
       '<p class="wait-acknowledgement" id="wait-acknowledgement">',
-      state.waitAcknowledged ? "好。我们不赶时间。" : "",
+      state.waitAcknowledged ? escapeHtml(currentWaitSupportMessage()) : "",
       "</p>",
     ].join("");
-    var secondary = '<button class="quiet-link" type="button" data-action="wait-more">再陪我一会儿</button>';
+    var secondary = '<button class="quiet-link" type="button" data-action="wait-more">再给我一句</button>';
     return calmScreen("让时间过去", body, "它退了", "wait-done", "", secondary);
+  }
+
+  function waitSupportMessages() {
+    var messages = supportWordsForCurrentRun().map(function (word) {
+      return "“" + word + "”";
+    });
+    if (state.draft.anchor) {
+      messages.push("想一眼“" + state.draft.anchor + "”。不用把画面想完整。");
+    }
+    messages.push("我记得：惊恐退下去以后，胸口会重新平静。");
+    return messages;
+  }
+
+  function currentWaitSupportMessage() {
+    var messages = waitSupportMessages();
+    if (state.waitSupportIndex < 0) return "";
+    return messages[state.waitSupportIndex % messages.length];
   }
 
   function currentWords() {
@@ -526,16 +629,24 @@
 
   function renderWords() {
     var words = currentWords();
+    var usesDefaultWords = sameWords(words, DEFAULT_WORDS);
     var list = words.map(function (word) {
       return "<li>" + escapeHtml(word) + "</li>";
     }).join("");
     var body = [
       '<h1 class="display-title">给现在的你</h1>',
-      '<p class="words-intro">下面这些话，是在状态好时留下来的。如果你写过自己的卡片，现在去相册找它。</p>',
+      '<p class="words-intro">',
+      usesDefaultWords
+        ? "这些不是临时拼出来的安慰。我也经历过惊恐，它们是我曾经真正说给自己的话。"
+        : "这是状态好时的你，真正留给现在的自己的话。如果做过卡片，现在也可以去相册找它。",
+      "</p>",
       '<ul class="words-list">',
       list,
       "</ul>",
-      '<p class="words-after">工具只是陪你走了一段。这一阵感觉也在自己的时间里变化。</p>',
+      '<aside class="words-memory">',
+      '<span>我记得</span>',
+      '<p>惊恐退下去后，胸口像岩浆起伏后终于归于平静。那个镇定、有勇气的自己也是真的。</p>',
+      "</aside>",
     ].join("");
     var secondary = '<button class="quiet-link" type="button" data-action="wait-again">再陪我等一会儿</button>';
     return calmScreen("你的话", body, "回到开头", "home", "", secondary, false)
@@ -552,22 +663,35 @@
       '<section class="screen screen-scroll">',
       '<nav class="page-nav"><button class="page-back" type="button" data-action="home">回到首页</button><span class="eyebrow">状态好时再写</span></nav>',
       '<h1 class="page-title">现在的你，比发作时的你更清楚该说什么。</h1>',
-      '<p class="page-lead">写给那个时候的自己。下面先放了一份示例，你可以全改掉，也可以只用默认内容。</p>',
+      '<p class="page-lead">写给那个时候的自己。想不到时，先借一个真实例子看看，再慢慢换成你自己的。</p>',
       '<form class="prepare-form" id="prepare-form">',
       '<section class="form-section">',
       '<div class="form-section__heading"><h2>一个锚点</h2><span class="field-label">一眼能认出来</span></div>',
       '<p class="form-section__hint">一个词、一个物件、一个画面。</p>',
       '<label class="field-label" for="anchor">我的锚点</label>',
-      '<input class="text-field" id="anchor" name="anchor" maxlength="16" value="', escapeHtml(draft.anchor), '" placeholder="例如：窗台上的绿萝">',
+      '<input class="text-field" id="anchor" name="anchor" maxlength="16" value="', escapeHtml(draft.anchor), '" placeholder="例如：雨天的假山">',
+      '<div class="example-block">',
+      '<span class="example-block__label">这是我的例子，不一定是你的</span>',
+      '<div class="example-chips">',
+      '<button class="example-chip" type="button" data-action="use-anchor-example" data-value="雨天的假山">雨天的假山</button>',
+      '<button class="example-chip" type="button" data-action="use-anchor-example" data-value="第一次看见海">第一次看见海</button>',
+      '<button class="example-chip" type="button" data-action="use-anchor-example" data-value="刚走进游戏房时">刚走进游戏房时</button>',
+      "</div>",
+      "</div>",
       "</section>",
       '<section class="form-section">',
       '<div class="form-section__heading"><h2>一个安全场景</h2><span class="field-label">三小句就够</span></div>',
       '<div class="field-stack">',
-      '<label><span class="field-label">你在哪？</span><input class="text-field" id="scene-place" maxlength="18" value="', escapeHtml(draft.scenePlace), '" placeholder="靠窗的沙发上"></label>',
-      '<label><span class="field-label">什么温度？</span><input class="text-field" id="scene-temperature" maxlength="18" value="', escapeHtml(draft.sceneTemperature), '" placeholder="空气微凉"></label>',
-      '<label><span class="field-label">什么声音？</span><input class="text-field" id="scene-sound" maxlength="18" value="', escapeHtml(draft.sceneSound), '" placeholder="雨落在遮雨棚上"></label>',
+      '<label><span class="field-label">你在哪？</span><input class="text-field" id="scene-place" maxlength="18" value="', escapeHtml(draft.scenePlace), '" placeholder="雪天的公园湖边"></label>',
+      '<label><span class="field-label">什么温度？</span><input class="text-field" id="scene-temperature" maxlength="18" value="', escapeHtml(draft.sceneTemperature), '" placeholder="空气很冷，雪在落"></label>',
+      '<label><span class="field-label">什么声音？</span><input class="text-field" id="scene-sound" maxlength="18" value="', escapeHtml(draft.sceneSound), '" placeholder="家人朋友在随便聊天"></label>',
       "</div>",
       '<p class="scene-preview" id="scene-preview">', escapeHtml(composeScene(draft)), "</p>",
+      '<div class="scene-example">',
+      '<span class="example-block__label">这是我的一个真实例子</span>',
+      '<p>我在雪天的公园湖边。空气很冷，雪在落。我能听见家人朋友在随便聊天。</p>',
+      '<button type="button" data-action="use-scene-example">借这个例子试试</button>',
+      "</div>",
       "</section>",
       '<section class="form-section">',
       '<div class="form-section__heading"><h2>三句话</h2><span class="field-label">给发作时的自己</span></div>',
@@ -750,6 +874,91 @@
     return "see";
   }
 
+  function groundingPoolForSense(sense) {
+    if (sense === "触碰") return GROUNDING_POOLS.touch;
+    if (sense === "听见") return GROUNDING_POOLS.hear;
+    if (sense === "闻到") return GROUNDING_POOLS.smell;
+    if (sense === "尝到") return GROUNDING_POOLS.taste;
+    return GROUNDING_POOLS.see;
+  }
+
+  function groundingAnswerPlaceholder(sense) {
+    if (sense === "触碰") return "例如：粗糙、微凉";
+    if (sense === "听见") return "例如：空调声";
+    if (sense === "闻到") return "例如：洗衣液，或没有";
+    if (sense === "尝到") return "例如：淡淡的甜，或没有";
+    return "例如：窗框";
+  }
+
+  function groundingAnswerEcho() {
+    if (!state.groundAnswers.length) {
+      return "找到后，写一个词。不方便输入，也可以直接继续。";
+    }
+    var latest = state.groundAnswers[state.groundAnswers.length - 1];
+    var tails = {
+      "看见": ["你真的把它从眼前找出来了。", "好，眼前这个东西被你看见了。"],
+      "触碰": ["你的手替你回答了。", "好，你刚才真的碰到了它。"],
+      "听见": ["你刚才真的停下来听了。", "好，你把这个声音找出来了。"],
+      "闻到": ["有或没有都算，你已经留意过了。", "好，这就是你此刻闻到的。"],
+      "尝到": ["有或没有都算，你已经留意过了。", "好，这就是你此刻尝到的。"],
+    };
+    var choices = tails[latest.sense] || ["好，这是你刚才真的找到的。"];
+    var tail = choices[(state.groundAnswers.length - 1) % choices.length];
+    return "「" + latest.answer + "」。" + tail;
+  }
+
+  function recordGroundingAnswer() {
+    var field = document.getElementById("ground-answer");
+    var step = state.groundSteps[state.groundIndex];
+    if (!field || !step) return "";
+    var answer = cleanText(field.value, 16);
+    if (!answer) return "";
+    state.groundAnswers.push({ sense: step.sense, answer: answer });
+    return answer;
+  }
+
+  function updateGroundingAnswerInput(event) {
+    if (!event.target || event.target.id !== "ground-answer") return;
+    var button = app.querySelector('[data-action="ground-next"]');
+    var step = state.groundSteps[state.groundIndex];
+    if (!button || !step) return;
+    button.textContent = cleanText(event.target.value, 16) ? "写好了，继续" : step.button;
+  }
+
+  function swapGroundingStep() {
+    var current = state.groundSteps[state.groundIndex];
+    if (!current) return;
+    var pool = groundingPoolForSense(current.sense);
+    var unavailable = {};
+    state.groundSteps.forEach(function (step) {
+      unavailable[step.prompt] = true;
+    });
+    state.groundUsedPrompts.forEach(function (prompt) {
+      unavailable[prompt] = true;
+    });
+    var candidates = pool.filter(function (step) {
+      return !unavailable[step.prompt];
+    });
+
+    if (!candidates.length) {
+      var usedElsewhere = {};
+      state.groundSteps.forEach(function (step, index) {
+        if (index !== state.groundIndex) usedElsewhere[step.prompt] = true;
+      });
+      candidates = pool.filter(function (step) {
+        return step.prompt !== current.prompt && !usedElsewhere[step.prompt];
+      });
+    }
+
+    if (!candidates.length) return;
+    var replacement = candidates[Math.floor(Math.random() * candidates.length)];
+    state.groundSteps[state.groundIndex] = replacement;
+    if (state.groundUsedPrompts.indexOf(replacement.prompt) === -1) {
+      state.groundUsedPrompts.push(replacement.prompt);
+    }
+    updateGroundingStep();
+  }
+
   function startBreathingGuide() {
     var label = document.getElementById("breathing-label");
     var circle = document.querySelector(".breathing-circle");
@@ -835,6 +1044,8 @@
     var sense = document.getElementById("grounding-sense");
     var prompt = document.getElementById("grounding-prompt");
     var button = app.querySelector('[data-action="ground-next"]');
+    var answer = document.getElementById("ground-answer");
+    var answerEcho = document.getElementById("ground-answer-echo");
     if (!step || !object || !sense || !prompt || !button) return;
     if (groundingAnimationTimer) window.clearTimeout(groundingAnimationTimer);
     object.className = "grounding-object grounding-object--" + groundingVisualClass(step.sense);
@@ -843,6 +1054,11 @@
     prompt.textContent = step.prompt;
     restartClassAnimation(prompt, "is-settling");
     button.textContent = step.button;
+    if (answer) {
+      answer.value = "";
+      answer.setAttribute("placeholder", groundingAnswerPlaceholder(step.sense));
+    }
+    if (answerEcho) answerEcho.textContent = groundingAnswerEcho();
     groundingAnimationTimer = window.setTimeout(function () {
       object.classList.remove("is-settling");
       prompt.classList.remove("is-settling");
@@ -979,7 +1195,7 @@
     var words = draft.words.filter(function (word) { return Boolean(word); });
     if (!words.length) words = DEFAULT_WORDS.slice();
     var actions = selectedActions(draft);
-    var anchor = draft.anchor || "窗边的一点光";
+    var anchor = draft.anchor || "还没写，也没关系";
     var scene = composeScene(draft);
     var titleSize = 70 * scale;
     var bodySize = 51 * scale;
@@ -1107,8 +1323,8 @@
     context.fillText("写于 " + localDateString() + "，那天我状态很好", 94, footerTop + 38);
     context.font = canvasFont(44, '"Songti SC", "STSong", serif', 400);
     context.fillStyle = "#d8d2c6";
-    context.fillText("平静不是假的；它一直是我身上的", 94, footerTop + 102);
-    context.fillText("另一种可能。", 94, footerTop + 157);
+    context.fillText("我记得它退下去以后，胸口会重新平静。", 94, footerTop + 102);
+    context.fillText("那个镇定、有勇气的自己也是真的。", 94, footerTop + 157);
     return canvas.toDataURL("image/png");
   }
 
@@ -1196,8 +1412,14 @@
     state.position = "";
     state.groundIndex = 0;
     state.groundSteps = createGroundingRun();
+    state.groundUsedPrompts = state.groundSteps.map(function (step) {
+      return step.prompt;
+    });
+    state.groundAnswers = [];
     state.waitStartedAt = null;
     state.waitAcknowledged = false;
+    state.waitSupportIndex = -1;
+    state.supportWordIndex = 0;
     state.tracePath = randomTracePath();
   }
 
@@ -1224,15 +1446,40 @@
       navigate("orient");
     } else if (action === "orient-ready") {
       navigate(routeForNeed());
+    } else if (action === "support-swap") {
+      var supportWords = supportWordsForCurrentRun();
+      state.supportWordIndex = (state.supportWordIndex + 1) % supportWords.length;
+      var supportWord = document.getElementById("lived-support-word");
+      if (supportWord) supportWord.textContent = "“" + currentSupportWord() + "”";
+    } else if (action === "use-anchor-example") {
+      var anchorField = document.getElementById("anchor");
+      if (anchorField) {
+        anchorField.value = control.getAttribute("data-value") || "";
+        updateDraftFromForm();
+      }
+    } else if (action === "use-scene-example") {
+      var placeField = document.getElementById("scene-place");
+      var temperatureField = document.getElementById("scene-temperature");
+      var soundField = document.getElementById("scene-sound");
+      if (placeField && temperatureField && soundField) {
+        placeField.value = "雪天的公园湖边";
+        temperatureField.value = "空气很冷，雪在落";
+        soundField.value = "家人朋友在随便聊天";
+        updateDraftFromForm();
+      }
     } else if (action === "breath-touch") {
       if (suppressBreathingClick) suppressBreathingClick = false;
       else touchBreathingCircle();
     } else if (action === "next" || action === "skip") {
+      if (action === "skip" && state.route === "ground") recordGroundingAnswer();
       if (next === "wait" && !state.waitStartedAt) state.waitStartedAt = Date.now();
       navigate(next);
     } else if (action === "words") {
       navigate("words");
+    } else if (action === "ground-swap") {
+      swapGroundingStep();
     } else if (action === "ground-next") {
+      recordGroundingAnswer();
       if (state.groundIndex < state.groundSteps.length - 1) {
         state.groundIndex += 1;
         updateGroundingStep();
@@ -1242,8 +1489,9 @@
       }
     } else if (action === "wait-more") {
       state.waitAcknowledged = true;
+      state.waitSupportIndex += 1;
       var acknowledgement = document.getElementById("wait-acknowledgement");
-      if (acknowledgement) acknowledgement.textContent = "好。我们不赶时间。";
+      if (acknowledgement) acknowledgement.textContent = currentWaitSupportMessage();
     } else if (action === "wait-done") {
       navigate("words");
     } else if (action === "wait-again") {
@@ -1261,8 +1509,24 @@
     }
   });
 
-  app.addEventListener("input", updateDraftFromForm);
+  app.addEventListener("input", function (event) {
+    updateDraftFromForm();
+    updateGroundingAnswerInput(event);
+  });
   app.addEventListener("change", updateDraftFromForm);
+  app.addEventListener("keydown", function (event) {
+    if (!event.target || event.target.id !== "ground-answer" || event.key !== "Enter") return;
+    event.preventDefault();
+    var button = app.querySelector('[data-action="ground-next"]');
+    if (button) button.click();
+  });
+  app.addEventListener("focusin", function (event) {
+    if (event.target && event.target.id === "ground-answer") setAppHeight();
+  });
+  app.addEventListener("focusout", function (event) {
+    if (!event.target || event.target.id !== "ground-answer") return;
+    window.setTimeout(setAppHeight, 0);
+  });
   app.addEventListener("submit", function (event) {
     if (event.target.id !== "prepare-form") return;
     event.preventDefault();

@@ -156,6 +156,17 @@ async function run() {
   await evaluate(sessionId, "document.querySelector('[data-position=sitting]').click()");
   await evaluate(sessionId, "document.querySelector('[data-action=orient-ready]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "accept");
+  const livedVoice = JSON.parse(await evaluate(sessionId, `(() => {
+    const before = document.querySelector('#lived-support-word').textContent;
+    document.querySelector('[data-action=support-swap]').click();
+    const after = document.querySelector('#lived-support-word').textContent;
+    const voice = document.querySelector('.lived-voice').getBoundingClientRect();
+    const action = document.querySelector('.calm-actions .primary-button').getBoundingClientRect();
+    return JSON.stringify({ before, after, fits: voice.bottom < action.top });
+  })()`));
+  assert.match(livedVoice.before, /那又怎样/);
+  assert.notEqual(livedVoice.after, livedVoice.before);
+  assert.equal(livedVoice.fits, true);
   await evaluate(sessionId, "document.querySelector('[data-action=words]').click()");
   await evaluate(sessionId, "document.querySelector('[data-action=home]').click()");
   await evaluate(sessionId, "document.querySelector('[data-action=start]').click()");
@@ -192,8 +203,65 @@ async function run() {
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "ground");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getGroundCount()"), 15);
   assert.equal(await evaluate(sessionId, "document.querySelector('#grounding-object').classList.contains('grounding-object--see')"), true);
+  const keyboardFit = JSON.parse(await evaluate(sessionId, `(() => {
+    document.documentElement.classList.add('ground-keyboard-open');
+    document.documentElement.style.setProperty('--app-height', '360px');
+    const field = document.querySelector('#ground-answer').getBoundingClientRect();
+    const button = document.querySelector('[data-action=ground-next]').getBoundingClientRect();
+    const footer = document.querySelector('.boundary-footer').getBoundingClientRect();
+    const secondaryDisplay = getComputedStyle(document.querySelector('.grounding-secondary')).display;
+    const result = { fieldBottom: field.bottom, buttonTop: button.top, buttonBottom: button.bottom, footerTop: footer.top, secondaryDisplay };
+    document.documentElement.classList.remove('ground-keyboard-open');
+    document.documentElement.style.setProperty('--app-height', innerHeight + 'px');
+    return JSON.stringify(result);
+  })()`));
+  assert.ok(keyboardFit.fieldBottom < keyboardFit.buttonTop);
+  assert.ok(keyboardFit.buttonBottom < keyboardFit.footerTop);
+  assert.equal(keyboardFit.secondaryDisplay, "none");
+  const swappedGround = JSON.parse(await evaluate(sessionId, `(() => {
+    const beforePrompt = document.querySelector('#grounding-prompt').textContent;
+    const beforeSense = document.querySelector('#grounding-sense').textContent;
+    const beforeIndex = window.__ANDING_CARD__.getGroundIndex();
+    document.querySelector('[data-action=ground-swap]').click();
+    return JSON.stringify({
+      beforePrompt,
+      afterPrompt: document.querySelector('#grounding-prompt').textContent,
+      beforeSense,
+      afterSense: document.querySelector('#grounding-sense').textContent,
+      beforeIndex,
+      afterIndex: window.__ANDING_CARD__.getGroundIndex()
+    });
+  })()`));
+  assert.notEqual(swappedGround.afterPrompt, swappedGround.beforePrompt);
+  assert.equal(swappedGround.afterSense, swappedGround.beforeSense);
+  assert.equal(swappedGround.afterIndex, swappedGround.beforeIndex);
+  const groundingActionsFit = JSON.parse(await evaluate(sessionId, `(() => {
+    const swap = document.querySelector('[data-action=ground-swap]').getBoundingClientRect();
+    const footer = document.querySelector('.boundary-footer').getBoundingClientRect();
+    return JSON.stringify({ swapHeight: swap.height, swapBottom: swap.bottom, footerTop: footer.top });
+  })()`));
+  assert.ok(groundingActionsFit.swapHeight >= 44);
+  assert.ok(groundingActionsFit.swapBottom < groundingActionsFit.footerTop);
 
-  for (let index = 0; index < 5; index += 1) {
+  const typedGround = JSON.parse(await evaluate(sessionId, `(() => {
+    const field = document.querySelector('#ground-answer');
+    field.value = '窗框';
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    const buttonLabel = document.querySelector('[data-action=ground-next]').textContent;
+    document.querySelector('[data-action=ground-next]').click();
+    return JSON.stringify({
+      buttonLabel,
+      index: window.__ANDING_CARD__.getGroundIndex(),
+      cleared: document.querySelector('#ground-answer').value,
+      echo: document.querySelector('#ground-answer-echo').textContent
+    });
+  })()`));
+  assert.equal(typedGround.buttonLabel, "写好了，继续");
+  assert.equal(typedGround.index, 1);
+  assert.equal(typedGround.cleared, "");
+  assert.match(typedGround.echo, /窗框/);
+
+  for (let index = 0; index < 4; index += 1) {
     await evaluate(sessionId, "document.querySelector('[data-action=ground-next]').click()");
   }
   assert.equal(await evaluate(sessionId, "document.querySelector('#grounding-object').classList.contains('grounding-object--touch')"), true);
@@ -202,6 +270,7 @@ async function run() {
   }
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "wait");
   assert.match(await evaluate(sessionId, "document.querySelector('#wait-timer').textContent"), /^00:0[01]$/);
+  assert.match(await evaluate(sessionId, "document.querySelector('.grounding-recall').textContent"), /窗框/);
   const traceState = JSON.parse(await evaluate(sessionId, `(() => {
     const svg = document.querySelector('.wait-trace');
     const lead = document.querySelector('#wait-trace-lead');
@@ -226,10 +295,23 @@ async function run() {
     return copy.bottom < button.top;
   })()`);
   assert.equal(waitFits, true, "wait activity must not collide with the primary action");
+  const waitSupport = JSON.parse(await evaluate(sessionId, `(() => {
+    const control = document.querySelector('[data-action=wait-more]');
+    control.click();
+    const first = document.querySelector('#wait-acknowledgement').textContent;
+    control.click();
+    const second = document.querySelector('#wait-acknowledgement').textContent;
+    const acknowledgement = document.querySelector('#wait-acknowledgement').getBoundingClientRect();
+    const button = document.querySelector('.calm-actions .primary-button').getBoundingClientRect();
+    return JSON.stringify({ first, second, fits: acknowledgement.bottom < button.top });
+  })()`));
+  assert.match(waitSupport.first, /那又怎样/);
+  assert.notEqual(waitSupport.second, waitSupport.first);
+  assert.equal(waitSupport.fits, true);
   await evaluate(sessionId, "document.querySelector('[data-action=wait-done]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "words");
   const wordsFit = await evaluate(sessionId, `(() => {
-    const list = document.querySelector('.words-list').getBoundingClientRect();
+    const list = document.querySelector('.words-memory').getBoundingClientRect();
     const button = document.querySelector('.calm-actions .primary-button').getBoundingClientRect();
     return list.bottom < button.top;
   })()`);
@@ -238,6 +320,20 @@ async function run() {
   await evaluate(sessionId, "document.querySelector('[data-action=home]').click()");
   await evaluate(sessionId, "document.querySelector('[data-action=prepare]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "prepare");
+  assert.equal(await evaluate(sessionId, "document.querySelector('#anchor').value"), "");
+  const examples = JSON.parse(await evaluate(sessionId, `(() => {
+    document.querySelector('[data-action=use-anchor-example]').click();
+    const anchor = document.querySelector('#anchor').value;
+    document.querySelector('[data-action=use-scene-example]').click();
+    return JSON.stringify({
+      anchor,
+      place: document.querySelector('#scene-place').value,
+      preview: document.querySelector('#scene-preview').textContent
+    });
+  })()`));
+  assert.equal(examples.anchor, "雨天的假山");
+  assert.equal(examples.place, "雪天的公园湖边");
+  assert.match(examples.preview, /家人朋友在随便聊天/);
   const preview = await evaluate(sessionId, `(() => {
     const field = document.querySelector('#scene-place');
     field.value = '门边的旧木椅';

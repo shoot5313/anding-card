@@ -50,9 +50,18 @@ test("the emergency route has active, focused stages and an always-available hum
   assert.match(app, /直接看给我的话/);
   assert.match(app, /data-action="breath-touch"/);
   assert.match(app, /grounding-object/);
+  assert.match(app, /data-action="ground-swap"/);
+  assert.match(app, /swapGroundingStep/);
+  assert.match(app, /id="ground-answer"/);
+  assert.match(app, /groundAnswers/);
+  assert.match(app, /刚才你真的找到过：/);
   assert.match(app, /id="wait-trace-board"/);
   assert.match(app, /getPointAtLength/);
-  assert.match(app, /工具只是陪你走了一段/);
+  assert.match(app, /我也经历过惊恐/);
+  assert.match(app, /data-action="support-swap"/);
+  assert.match(app, /再给我一句/);
+  assert.match(app, /那又怎样？/);
+  assert.match(app, /我以前都挺过去了，这次也会的/);
   assert.match(css, /touch-echo-spread/);
   assert.match(html, /data-global-action="help"/);
   assert.match(app, /href="tel:12356"/);
@@ -74,12 +83,24 @@ test("the generated card is a local 1080 by 1920 PNG with manual wrapping", () =
   assert.match(app, /canvas\.toDataURL\("image\/png"\)/);
   assert.match(app, /写于 /);
   assert.match(app, /那天我状态很好/);
-  assert.match(app, /平静不是假的；它一直是我身上的/);
+  assert.match(app, /我记得它退下去以后，胸口会重新平静/);
   assert.match(app, /window\.xhs && window\.xhs\.miniTool/);
   assert.match(app, /writeTempFile\(\{ data: state\.cardDataUrl \}\)/);
   assert.match(app, /saveImageToPhotosAlbum\(\{ filePath: temporary\.filePath \}\)/);
   assert.doesNotMatch(app, /\.split\(","\)\[1\]/);
   assert.doesNotMatch(app, /postNote\s*\(/);
+});
+
+test("personal memories are examples, never assigned as the reader's defaults", () => {
+  assert.match(app, /anchor: ""/);
+  assert.match(app, /scenePlace: ""/);
+  assert.match(app, /data-action="use-anchor-example"/);
+  assert.match(app, /data-action="use-scene-example"/);
+  assert.match(app, /这是我的例子，不一定是你的/);
+  assert.match(app, /这是我的一个真实例子/);
+  assert.match(app, /draft\.anchor \|\| "还没写，也没关系"/);
+  assert.doesNotMatch(app, /anchor: "雨天的假山"/);
+  assert.doesNotMatch(runtimeSource, /按摩颈部|把脸埋在冰冷水里|像排便困难时那样使劲/);
 });
 
 test("runtime is offline, permission-light, and stores only an optional draft", () => {
