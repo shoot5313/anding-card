@@ -120,7 +120,9 @@ async function run() {
     viewport: innerWidth,
     emergencyHeight: document.querySelector('[data-action=start]').getBoundingClientRect().height,
     footerVisible: document.querySelector('.boundary-footer').getBoundingClientRect().bottom <= innerHeight,
-    webInstall: Boolean(document.querySelector('[data-web-action=install]'))
+    webInstall: Boolean(document.querySelector('[data-web-action=install]')),
+    brand: document.querySelector('.home-title').textContent,
+    subtitle: document.querySelector('.home-subtitle').textContent
   })`);
   const initialState = JSON.parse(initial);
   assert.equal(initialState.route, "home");
@@ -128,6 +130,8 @@ async function run() {
   assert.ok(initialState.emergencyHeight >= 64);
   assert.equal(initialState.footerVisible, true);
   assert.equal(initialState.webInstall, expectsWebLayer);
+  assert.equal(initialState.brand, "缓一缓");
+  assert.equal(initialState.subtitle, "它会过去");
 
   if (/^https?:\/\//.test(url)) {
     const pwaState = JSON.parse(await evaluate(sessionId, `(async () => {
@@ -145,20 +149,83 @@ async function run() {
   }
 
   await evaluate(sessionId, "document.querySelector('[data-action=start]').click()");
-  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "face");
-  await evaluate(sessionId, "document.querySelector('[data-action=next]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "checkin");
+  assert.equal(await evaluate(sessionId, "document.querySelectorAll('[data-action=choose-need]').length"), 5);
+
+  await evaluate(sessionId, "document.querySelector('[data-need=heart]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-position=sitting]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=orient-ready]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "accept");
-  await evaluate(sessionId, "document.querySelector('[data-action=next]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=words]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=home]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=start]').click()");
+
+  await evaluate(sessionId, "document.querySelector('[data-need=unreal]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-position=standing]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=orient-ready]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "ground");
+  await evaluate(sessionId, "document.querySelector('[data-action=words]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=home]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=start]').click()");
+
+  await evaluate(sessionId, "document.querySelector('[data-need=breath]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "orient");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getNeed()"), "breath");
+  await evaluate(sessionId, "document.querySelector('[data-position=sitting]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "orient");
+  await evaluate(sessionId, "document.querySelector('[data-action=orient-ready]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "breathe");
-  assert.equal(await evaluate(sessionId, "document.querySelector('#breathing-label').textContent"), "吸");
+  assert.equal(await evaluate(sessionId, "document.querySelector('#breathing-label').textContent"), "按住");
+  const heldBreath = JSON.parse(await evaluate(sessionId, `(() => {
+    const circle = document.querySelector('[data-action=breath-touch]');
+    circle.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: 195, clientY: 330 }));
+    return JSON.stringify({ label: document.querySelector('#breathing-label').textContent, held: circle.classList.contains('is-held') });
+  })()`));
+  assert.deepEqual(heldBreath, { label: "吸", held: true });
+  const releasedBreath = JSON.parse(await evaluate(sessionId, `(() => {
+    document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' }));
+    const circle = document.querySelector('[data-action=breath-touch]');
+    return JSON.stringify({ label: document.querySelector('#breathing-label').textContent, releasing: circle.classList.contains('is-releasing') });
+  })()`));
+  assert.deepEqual(releasedBreath, { label: "呼", releasing: true });
   await evaluate(sessionId, "document.querySelector('[data-action=next]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "ground");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getGroundCount()"), 15);
+  assert.equal(await evaluate(sessionId, "document.querySelector('#grounding-object').classList.contains('grounding-object--see')"), true);
 
-  for (let index = 0; index < 15; index += 1) {
+  for (let index = 0; index < 5; index += 1) {
+    await evaluate(sessionId, "document.querySelector('[data-action=ground-next]').click()");
+  }
+  assert.equal(await evaluate(sessionId, "document.querySelector('#grounding-object').classList.contains('grounding-object--touch')"), true);
+  for (let index = 5; index < 15; index += 1) {
     await evaluate(sessionId, "document.querySelector('[data-action=ground-next]').click()");
   }
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "wait");
   assert.match(await evaluate(sessionId, "document.querySelector('#wait-timer').textContent"), /^00:0[01]$/);
+  const traceState = JSON.parse(await evaluate(sessionId, `(() => {
+    const svg = document.querySelector('.wait-trace');
+    const lead = document.querySelector('#wait-trace-lead');
+    const point = svg.createSVGPoint();
+    point.x = Number(lead.getAttribute('cx'));
+    point.y = Number(lead.getAttribute('cy'));
+    const screenPoint = point.matrixTransform(svg.getScreenCTM());
+    const board = document.querySelector('#wait-trace-board');
+    board.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'touch', clientX: screenPoint.x, clientY: screenPoint.y }));
+    return JSON.stringify({
+      finger: document.querySelector('#wait-trace-finger').classList.contains('is-visible'),
+      following: board.classList.contains('is-following'),
+      copy: document.querySelector('#wait-trace-copy').textContent
+    });
+  })()`));
+  assert.equal(traceState.finger, true);
+  assert.equal(traceState.following, true);
+  assert.match(traceState.copy, /就这样/);
+  const waitFits = await evaluate(sessionId, `(() => {
+    const copy = document.querySelector('#wait-copy').getBoundingClientRect();
+    const button = document.querySelector('.calm-actions .primary-button').getBoundingClientRect();
+    return copy.bottom < button.top;
+  })()`);
+  assert.equal(waitFits, true, "wait activity must not collide with the primary action");
   await evaluate(sessionId, "document.querySelector('[data-action=wait-done]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "words");
   const wordsFit = await evaluate(sessionId, `(() => {

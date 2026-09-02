@@ -17,8 +17,8 @@ const webHead = [
   '    <meta name="apple-mobile-web-app-capable" content="yes">',
   '    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
   '    <meta property="og:type" content="website">',
-  '    <meta property="og:title" content="安定卡 · 它会过">',
-  '    <meta property="og:description" content="发作时一次只做一件事；平静时，为自己留一张安定卡。">',
+  '    <meta property="og:title" content="缓一缓 · 它会过去">',
+  '    <meta property="og:description" content="发作时一次只做一件事；平静时，为自己留一张卡片。">',
   '    <meta property="og:image" content="https://shoot5313.github.io/anding-card/assets/icon-1024.png">',
   '    <link rel="canonical" href="https://shoot5313.github.io/anding-card/">',
   '    <link rel="manifest" href="./manifest.webmanifest">',
@@ -62,4 +62,4 @@ const serviceWorker = fs.readFileSync(path.join(root, "web", "sw.js"), "utf8")
   .replace("__VERSION__", pkg.version);
 fs.writeFileSync(path.join(site, "sw.js"), serviceWorker);
 
-process.stdout.write(`Built site/ for 安定卡 ${pkg.version}\n`);
+process.stdout.write(`Built site/ for 缓一缓 ${pkg.version}\n`);

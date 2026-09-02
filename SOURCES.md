@@ -1,6 +1,6 @@
 # 医学与热线核对来源
 
-核对日期：2026-09-01。这里只记录影响产品文案和安全边界的官方资料，不把本工具描述成医疗服务。
+核对日期：2026-09-02。这里只记录影响产品文案和安全边界的官方资料，不把本工具描述成医疗服务。
 
 ## 12356
 
@@ -19,5 +19,14 @@
 ## 呼吸提示
 
 - [NHS：Breathing exercises for stress](https://www.nhs.uk/mental-health/self-help/guides-tools-and-activities/breathing-exercises-for-stress/)：建议让呼吸在舒适范围内自然流动，不强迫，并轻柔、规律地吸气和呼气。
+- [剑桥大学医院：Breathing exercises in the treatment of hyperventilation](https://www.cuh.nhs.uk/patient-information/breathing-exercises-in-the-treatment-of-hyperventilation/)：建议把呼吸放慢、放轻，不用刻意吸得很深。
 
-因此呼吸页使用 4 秒吸、6 秒呼的视觉节奏，但明确写“不要吸很深，也不用做对”，且用户可随时离开。
+因此呼吸圆圈由用户按住和松开控制。文案只提示小一点、慢一点，不要求吸满，也不把“缺氧”等判断直接套到每个人身上。用户随时可以离开。
+
+## 主动落地与工具依赖
+
+- [美国退伍军人事务部：PTSD Recovery Program Therapist Manual](https://www.mirecc.va.gov/docs/visn6/PTSD_Recovery_Group-Therapist_Manual_3rd_edition.pdf)：落地练习把注意力带到眼前环境，可通过描述看到、听到和触到的具体事物来完成。
+- [Frimley Health NHS Foundation Trust：Managing stress and anxiety](https://www.fhft.nhs.uk/patients-and-visitors/patient-information-library/managing-stress-and-anxiety/submit/7561)：焦虑较强时，可用需要更多注意力的外部任务，例如描述物体的形状、大小、纹理和颜色。
+- [西澳大利亚临床干预中心：Panic](https://cci.health.wa.gov.au/Resources/For-Clinicians/Panic)：惊恐相关的安全行为可能让问题延续，CBT 会逐步减少这些行为。
+
+因此落地页要求用户真的去找、摸、听并说出答案，题目每次会变化。结束页也明确写清：工具只是陪伴，感觉仍在自己的时间里变化。产品不把“必须打开工具”塑造成熬过去的条件。

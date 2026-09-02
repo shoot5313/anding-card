@@ -34,7 +34,7 @@ test("every generated HTML and manifest resource exists", () => {
 test("the manifest is installable and keeps the emergency shortcut", () => {
   const manifest = JSON.parse(read("manifest.webmanifest"));
 
-  assert.equal(manifest.name, "安定卡 · 它会过");
+  assert.equal(manifest.name, "缓一缓 · 它会过去");
   assert.equal(manifest.start_url, "./");
   assert.equal(manifest.scope, "./");
   assert.equal(manifest.display, "standalone");

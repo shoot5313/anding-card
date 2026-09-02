@@ -7,7 +7,12 @@
   var CARD_HEIGHT = 1920;
   var transitionTimer = null;
   var breathingTimer = null;
+  var breathingTouchTimer = null;
+  var activeBreathingControl = null;
+  var suppressBreathingClick = false;
+  var groundingAnimationTimer = null;
   var waitTimer = null;
+  var waitTraceFrame = null;
   var cacheTimer = null;
   var navigating = false;
 
@@ -38,23 +43,61 @@
     customAction: "",
   };
 
-  var GROUNDING_STEPS = [
-    { sense: "看见", prompt: "说出你看到的一样东西。", button: "我看见了" },
-    { sense: "看见", prompt: "再找一样你看见的东西。", button: "我看见了" },
-    { sense: "看见", prompt: "再看一样。只说出它是什么。", button: "我看见了" },
-    { sense: "看见", prompt: "让眼睛落在另一件东西上。", button: "我看见了" },
-    { sense: "看见", prompt: "最后再看见一样东西。", button: "下一种感觉" },
-    { sense: "触碰", prompt: "摸一摸身边的一样东西。", button: "我摸到了" },
-    { sense: "触碰", prompt: "再碰一样。留意它是软还是硬。", button: "我摸到了" },
-    { sense: "触碰", prompt: "再摸一样，感觉它的温度。", button: "我摸到了" },
-    { sense: "触碰", prompt: "最后碰一下离你最近的东西。", button: "下一种感觉" },
-    { sense: "听见", prompt: "听。说出你听见的一个声音。", button: "我听见了" },
-    { sense: "听见", prompt: "再听一个近处或远处的声音。", button: "我听见了" },
-    { sense: "听见", prompt: "再听一个。声音来，不用追。", button: "下一种感觉" },
-    { sense: "闻到", prompt: "空气里有什么气味？没有也可以。", button: "我留意了" },
-    { sense: "闻到", prompt: "再闻一下。只停在这一口气。", button: "最后一种感觉" },
-    { sense: "尝到", prompt: "嘴里是什么味道？说不出来也可以。", button: "下一步" },
-  ];
+  var GROUNDING_POOLS = {
+    see: [
+      { sense: "看见", prompt: "找一样有直边的东西。用手指指向它。", button: "找到了" },
+      { sense: "看见", prompt: "找一样圆的，或带弧线的东西。", button: "找到了" },
+      { sense: "看见", prompt: "找一个上面有字的地方。读出最短的词。", button: "读出来了" },
+      { sense: "看见", prompt: "找两样颜色不同的东西。说出两种颜色。", button: "说出来了" },
+      { sense: "看见", prompt: "先找最远的一样东西，再找最近的一样。", button: "都找到了" },
+      { sense: "看见", prompt: "找一个影子、亮点或反光。", button: "找到了" },
+      { sense: "看见", prompt: "找一样比手掌小的东西。", button: "找到了" },
+      { sense: "看见", prompt: "扫一眼四周，找一样能移动的东西。", button: "找到了" },
+    ],
+    touch: [
+      { sense: "触碰", prompt: "摸一样有纹理的东西，停三秒。说出它粗还是细。", button: "摸过了" },
+      { sense: "触碰", prompt: "碰一下身边的东西。说出它比手背凉还是暖。", button: "说出来了" },
+      { sense: "触碰", prompt: "用脚踩一下地面。说出它硬还是软。", button: "踩到了" },
+      { sense: "触碰", prompt: "捏一下衣角。留意它薄、厚、软，还是硬。", button: "留意到了" },
+      { sense: "触碰", prompt: "把掌心压在身边的平面上，停三秒。", button: "压住了" },
+      { sense: "触碰", prompt: "找一个边角，用手指沿着它走一小段。", button: "走完了" },
+    ],
+    hear: [
+      { sense: "听见", prompt: "找一个最远的声音。说出它从哪里来。", button: "听到了" },
+      { sense: "听见", prompt: "找一个持续着的声音。跟着它听三秒。", button: "听过了" },
+      { sense: "听见", prompt: "找一个来自左边或右边的声音。", button: "找到了" },
+      { sense: "听见", prompt: "说出你现在所在的地方。听一听自己的声音。", button: "说出来了" },
+      { sense: "听见", prompt: "找一个刚才没留意到的小声音。", button: "找到了" },
+    ],
+    smell: [
+      { sense: "闻到", prompt: "找一种气味。没有明显气味，也把“没有”说出来。", button: "说出来了" },
+      { sense: "闻到", prompt: "闻一下衣袖或手边的东西。说出它像什么。", button: "闻过了" },
+      { sense: "闻到", prompt: "留意这一口气经过鼻尖时，有没有气味。", button: "留意了" },
+    ],
+    taste: [
+      { sense: "尝到", prompt: "留意嘴里现在的味道。说不出来，也说一声“说不出来”。", button: "说过了" },
+      { sense: "尝到", prompt: "动一下舌头，找一个最明显的味道。没有也算。", button: "找过了" },
+    ],
+  };
+
+  function takeRandom(source, count) {
+    var copy = source.slice();
+    for (var index = copy.length - 1; index > 0; index -= 1) {
+      var swapIndex = Math.floor(Math.random() * (index + 1));
+      var value = copy[index];
+      copy[index] = copy[swapIndex];
+      copy[swapIndex] = value;
+    }
+    return copy.slice(0, count);
+  }
+
+  function createGroundingRun() {
+    return takeRandom(GROUNDING_POOLS.see, 5)
+      .concat(takeRandom(GROUNDING_POOLS.touch, 4))
+      .concat(takeRandom(GROUNDING_POOLS.hear, 3))
+      .concat(takeRandom(GROUNDING_POOLS.smell, 2))
+      .concat(takeRandom(GROUNDING_POOLS.taste, 1));
+  }
 
   var WAIT_MESSAGES = [
     { at: 0, text: "什么都不用做。我在这儿，我们等这一阵感觉变化。" },
@@ -67,12 +110,27 @@
     { at: 900, text: "十五分钟。等你自己觉得可以了，再按“它退了”。" },
   ];
 
+  var TRACE_PATHS = [
+    "M20 98 C62 24 112 30 150 92 S238 170 300 86",
+    "M22 50 C70 138 108 150 150 74 S236 22 298 126",
+    "M20 112 C58 64 92 56 126 100 C162 146 198 142 228 88 C252 46 276 54 300 94",
+  ];
+
+  function randomTracePath() {
+    return TRACE_PATHS[Math.floor(Math.random() * TRACE_PATHS.length)];
+  }
+
   var state = {
     route: "home",
     returnRoute: "home",
+    need: "",
+    orientStep: 0,
+    position: "",
     groundIndex: 0,
+    groundSteps: createGroundingRun(),
     waitStartedAt: null,
     waitAcknowledged: false,
+    tracePath: randomTracePath(),
     draft: loadDraft(),
     cardDataUrl: "",
     cardSaved: false,
@@ -166,13 +224,31 @@
   }
 
   function clearRuntimeTimers() {
+    if (activeBreathingControl) {
+      activeBreathingControl.classList.remove("is-held");
+      activeBreathingControl.classList.remove("is-releasing");
+    }
+    activeBreathingControl = null;
+    suppressBreathingClick = false;
     if (breathingTimer) {
       window.clearTimeout(breathingTimer);
       breathingTimer = null;
     }
+    if (breathingTouchTimer) {
+      window.clearTimeout(breathingTouchTimer);
+      breathingTouchTimer = null;
+    }
+    if (groundingAnimationTimer) {
+      window.clearTimeout(groundingAnimationTimer);
+      groundingAnimationTimer = null;
+    }
     if (waitTimer) {
       window.clearInterval(waitTimer);
       waitTimer = null;
+    }
+    if (waitTraceFrame) {
+      window.cancelAnimationFrame(waitTraceFrame);
+      waitTraceFrame = null;
     }
   }
 
@@ -249,8 +325,8 @@
     return [
       '<section class="screen home">',
       '<header class="home__brand">',
-      '<h1 class="home-title">安定卡</h1>',
-      '<p class="home-subtitle">它会过</p>',
+      '<h1 class="home-title">缓一缓</h1>',
+      '<p class="home-subtitle">它会过去</p>',
       "</header>",
       '<div class="home__main">',
       '<div class="emergency-button-wrap">',
@@ -266,35 +342,113 @@
     ].join("");
   }
 
-  function renderFace() {
-    var body = '<h1 class="display-title">你按了。你没有绕开正在发生的感觉。<br>最难的一步，你已经开始做了。</h1>';
-    return calmScreen("面对", body, "好", "next", "accept");
+  function renderCheckin() {
+    return [
+      '<section class="screen screen-calm screen-choice">',
+      flowNav("先看最响的一个", true),
+      '<div class="screen-calm__body">',
+      '<h1 class="choice-title">现在最抢注意力的是哪一种？</h1>',
+      '<p class="support-copy">不用判断原因。选最像的一项就行。</p>',
+      '<div class="choice-grid">',
+      '<button class="choice-button" type="button" data-action="choose-need" data-need="heart"><span>心跳很快</span><small>身体反应很响</small></button>',
+      '<button class="choice-button" type="button" data-action="choose-need" data-need="breath"><span>呼吸很乱</span><small>总觉得吸不够</small></button>',
+      '<button class="choice-button" type="button" data-action="choose-need" data-need="unreal"><span>周围不真实</span><small>像隔着一层</small></button>',
+      '<button class="choice-button" type="button" data-action="choose-need" data-need="control"><span>怕会失控</span><small>怕自己撑不住</small></button>',
+      "</div>",
+      '<button class="quiet-link choice-unclear" type="button" data-action="choose-need" data-need="unclear">说不清，直接陪我</button>',
+      "</div>",
+      "</section>",
+    ].join("");
+  }
+
+  function renderOrient() {
+    if (state.orientStep === 0) {
+      return [
+        '<section class="screen screen-calm screen-choice">',
+        flowNav("先接住身体", true),
+        '<div class="screen-calm__body">',
+        '<h1 class="choice-title">你现在坐着，还是站着？</h1>',
+        '<p class="support-copy">不用改变姿势，先告诉我就好。</p>',
+        '<div class="choice-row">',
+        '<button class="choice-button" type="button" data-action="choose-position" data-position="sitting"><span>坐着</span></button>',
+        '<button class="choice-button" type="button" data-action="choose-position" data-position="standing"><span>站着</span></button>',
+        "</div>",
+        '<button class="quiet-link choice-unclear" type="button" data-action="choose-position" data-position="unclear">现在说不清</button>',
+        "</div>",
+        "</section>",
+      ].join("");
+    }
+
+    var instruction = state.position === "standing"
+      ? "如果方便，坐下来，或让身体靠住一样东西。"
+      : state.position === "sitting"
+        ? "让背后、手边或脚下的一样东西托住你一点。"
+        : "让脚或手碰住一样不会移动的东西。";
+    return [
+      '<section class="screen screen-calm screen-choice">',
+      flowNav("先接住身体", true),
+      '<div class="screen-calm__body">',
+      '<h1 class="choice-title">', escapeHtml(instruction), "</h1>",
+      '<p class="support-copy">不用做到标准，只找一个接触点。</p>',
+      '<div class="choice-row">',
+      '<button class="choice-button" type="button" data-action="orient-ready"><span>碰到了</span></button>',
+      '<button class="choice-button" type="button" data-action="orient-ready"><span>现在不方便</span></button>',
+      "</div>",
+      "</div>",
+      "</section>",
+    ].join("");
+  }
+
+  function routeForNeed() {
+    if (state.need === "breath") return "breathe";
+    if (state.need === "unreal") return "ground";
+    return "accept";
   }
 
   function renderAccept() {
+    var title = "不用赶走这些感觉。";
+    var copy = "先让熟悉的惊恐反应待在这儿。不需要立刻解决，也不需要现在就好起来。";
+    if (state.need === "heart") {
+      title = "心跳很响。先不替它下结论。";
+      copy = "让心脏自己跳一会儿，不用检查每一下，也不用现在证明身体发生了什么。";
+    } else if (state.need === "control") {
+      title = "“会失控”是一个很吓人的念头。";
+      copy = "先把它当成一个念头，不把它当成命令。此刻只留意身体和什么东西接触着。";
+    }
     var body = [
-      '<h1 class="display-title">不用赶走这些感觉。</h1>',
-      '<p class="support-copy">心跳快、发麻、喘不上气、觉得要出事——先让它们待在这儿。熟悉的惊恐反应很难受，但不需要立刻把它解决。你不需要现在就好起来。</p>',
+      '<h1 class="display-title">', escapeHtml(title), "</h1>",
+      '<p class="support-copy">', escapeHtml(copy), "</p>",
     ].join("");
-    return calmScreen("接受", body, "我让它在那儿", "next", "breathe");
+    return calmScreen("接受", body, "我先让它在这儿", "next", "ground");
   }
 
   function renderBreathe() {
+    var title = state.need === "breath"
+      ? "别吸满。只让一小口气进来。"
+      : "圆圈跟着你，不用你跟它。";
+    var response = state.need === "breath"
+      ? "短短按住，再松开。让呼气自己慢下来。"
+      : "按住时吸，松开时呼。按多久都可以。";
     var body = [
       '<div class="breathing-stage">',
-      '<div class="breathing-orbit" aria-hidden="true">',
-      '<div class="breathing-circle"><span class="breathing-label" id="breathing-label">吸</span></div>',
+      '<div class="breathing-orbit">',
+      '<button class="breathing-circle" type="button" data-action="breath-touch" aria-label="按住时吸气，松开时呼气">',
+      '<span class="breathing-label" id="breathing-label">按住</span>',
+      '</button>',
       "</div>",
-      '<h1 class="display-title">不用吸很深，也不用做对。</h1>',
-      '<p class="support-copy">轻轻跟着它飘就行。</p>',
+      '<h1 class="display-title">', escapeHtml(title), "</h1>",
+      '<p class="support-copy breathing-response" id="breathing-response" aria-live="polite">', escapeHtml(response), "</p>",
       "</div>",
     ].join("");
     return calmScreen("飘然", body, "够了，下一步", "next", "ground");
   }
 
   function renderGround() {
-    var step = GROUNDING_STEPS[state.groundIndex] || GROUNDING_STEPS[0];
+    var step = state.groundSteps[state.groundIndex] || state.groundSteps[0];
     var body = [
+      '<div class="grounding-object grounding-object--',
+      groundingVisualClass(step.sense),
+      '" id="grounding-object" aria-hidden="true"><span class="grounding-object__shape"></span></div>',
       '<span class="grounding-sense" id="grounding-sense">',
       escapeHtml(step.sense),
       "</span>",
@@ -336,10 +490,21 @@
     if (!state.waitStartedAt) state.waitStartedAt = Date.now();
     var seconds = elapsedWaitSeconds();
     var body = [
-      '<div class="timer" id="wait-timer" aria-label="已经过去 ',
+      '<div class="wait-stage">',
+      '<div class="wait-elapsed">已经过去 <span id="wait-timer" aria-label="已经过去 ',
       String(seconds),
       ' 秒">',
       formatElapsed(seconds),
+      "</span></div>",
+      '<div class="trace-board" id="wait-trace-board" role="group" aria-label="用手指跟随缓慢移动的亮点">',
+      '<svg class="wait-trace" viewBox="0 0 320 190" aria-hidden="true">',
+      '<path class="wait-trace__base" id="wait-trace-path" d="', escapeHtml(state.tracePath), '"></path>',
+      '<path class="wait-trace__lived" id="wait-trace-lived" d="', escapeHtml(state.tracePath), '"></path>',
+      '<circle class="wait-trace__lead" id="wait-trace-lead" cx="20" cy="98" r="7"></circle>',
+      '<circle class="wait-trace__finger" id="wait-trace-finger" cx="20" cy="98" r="11"></circle>',
+      "</svg>",
+      '<p class="trace-hint" id="wait-trace-copy" aria-live="polite">用手指跟着亮点走。跟丢也没关系。</p>',
+      "</div>",
       "</div>",
       '<h1 class="wait-copy" id="wait-copy">',
       escapeHtml(waitMessageFor(seconds)),
@@ -366,10 +531,11 @@
     }).join("");
     var body = [
       '<h1 class="display-title">给现在的你</h1>',
-      '<p class="words-intro">下面这些话，是在状态好时留下来的。如果你写过自己的安定卡，现在去相册找它。</p>',
+      '<p class="words-intro">下面这些话，是在状态好时留下来的。如果你写过自己的卡片，现在去相册找它。</p>',
       '<ul class="words-list">',
       list,
       "</ul>",
+      '<p class="words-after">工具只是陪你走了一段。这一阵感觉也在自己的时间里变化。</p>',
     ].join("");
     var secondary = '<button class="quiet-link" type="button" data-action="wait-again">再陪我等一会儿</button>';
     return calmScreen("你的话", body, "回到开头", "home", "", secondary, false)
@@ -425,7 +591,7 @@
       "</ul>",
       "</section>",
       '<div class="prepare-submit">',
-      '<button class="primary-button" type="submit">生成我的安定卡</button>',
+      '<button class="primary-button" type="submit">生成给自己的卡片</button>',
       '<p class="privacy-note">内容只留在这台设备上；缓存丢失也不影响急救流程。</p>',
       "</div>",
       "</form>",
@@ -442,7 +608,7 @@
       '<nav class="page-nav"><button class="page-back" type="button" data-action="edit-card">继续修改</button><span class="eyebrow">1080 × 1920</span></nav>',
       '<h1 class="page-title">这张卡，留给另一个时刻的你。</h1>',
       '<p class="page-lead">小红书内点“保存到相册”；普通浏览器里可以长按图片或直接截图。</p>',
-      '<div class="card-preview-wrap"><img class="card-preview" src="', state.cardDataUrl, '" alt="给发作时的我的安定卡"></div>',
+      '<div class="card-preview-wrap"><img class="card-preview" src="', state.cardDataUrl, '" alt="给发作时的我的卡片"></div>',
       '<div class="card-actions">',
       '<button class="save-button" type="button" data-action="save-card">保存到相册</button>',
       '<button class="secondary-button" type="button" data-action="home">先回到首页</button>',
@@ -460,7 +626,7 @@
       '<h1 class="page-title">惊恐很响，解释可以很短。</h1>',
       '<section class="info-section"><h2>这是什么</h2><p>惊恐发作像身体警报突然拉响：心跳变快、呼吸急、发麻或发晕都可能一起出现。感受很强，但仍要先排除身体原因。</p></section>',
       '<section class="info-section"><h2>为什么越来越怕</h2><p>身体反应是一层；“这些感觉是不是危险”的担心又加一层。越盯着它、越想立刻赶走它，恐惧可能被继续放大。</p></section>',
-      '<section class="info-section"><h2>它会过</h2><p>强烈感觉通常会自行缓下来，但每个人持续时间不同。不要拿十分钟当倒计时，也不必用时长证明自己做得好不好。</p></section>',
+      '<section class="info-section"><h2>它会过去</h2><p>强烈感觉通常会自行缓下来，但每个人持续时间不同。不要拿十分钟当倒计时，也不必用时长证明自己做得好不好。</p></section>',
       '<section class="info-section">',
       '<h2>四本可以慢慢读的书</h2>',
       '<ul class="book-list">',
@@ -501,7 +667,8 @@
   function render() {
     var markup = "";
     if (state.route === "home") markup = renderHome();
-    else if (state.route === "face") markup = renderFace();
+    else if (state.route === "checkin") markup = renderCheckin();
+    else if (state.route === "orient") markup = renderOrient();
     else if (state.route === "accept") markup = renderAccept();
     else if (state.route === "breathe") markup = renderBreathe();
     else if (state.route === "ground") markup = renderGround();
@@ -518,21 +685,80 @@
     if (state.route === "wait") startWaitClock();
   }
 
+  function restartClassAnimation(element, className) {
+    if (!element) return;
+    element.classList.remove(className);
+    void element.offsetWidth;
+    element.classList.add(className);
+  }
+
+  function touchBreathingCircle() {
+    var circle = document.querySelector(".breathing-circle");
+    var response = document.getElementById("breathing-response");
+    if (!circle || !response) return;
+    if (breathingTouchTimer) window.clearTimeout(breathingTouchTimer);
+    restartClassAnimation(circle, "is-touched");
+    response.textContent = "圆圈收到了。下次可以按住，再松开。";
+    breathingTouchTimer = window.setTimeout(function () {
+      if (state.route !== "breathe") return;
+      circle.classList.remove("is-touched");
+      response.textContent = state.need === "breath"
+        ? "短短按住，再松开。让呼气自己慢下来。"
+        : "按住时吸，松开时呼。按多久都可以。";
+    }, 1600);
+  }
+
+  function beginBreathHold(control) {
+    if (state.route !== "breathe" || !control) return;
+    if (breathingTimer) window.clearTimeout(breathingTimer);
+    suppressBreathingClick = true;
+    activeBreathingControl = control;
+    control.classList.remove("is-releasing");
+    control.classList.add("is-held");
+    var label = document.getElementById("breathing-label");
+    var response = document.getElementById("breathing-response");
+    if (label) label.textContent = "吸";
+    if (response) {
+      response.textContent = state.need === "breath"
+        ? "只吸一点，不用把胸口装满。"
+        : "圆圈正跟着你的手指长大。";
+    }
+  }
+
+  function endBreathHold() {
+    var control = activeBreathingControl;
+    if (!control) return;
+    activeBreathingControl = null;
+    control.classList.remove("is-held");
+    control.classList.add("is-releasing");
+    var label = document.getElementById("breathing-label");
+    var response = document.getElementById("breathing-response");
+    if (label) label.textContent = "呼";
+    if (response) response.textContent = "松开就好。不用把气呼尽。";
+    breathingTimer = window.setTimeout(function () {
+      if (state.route !== "breathe") return;
+      control.classList.remove("is-releasing");
+      if (label) label.textContent = "按住";
+    }, 6000);
+  }
+
+  function groundingVisualClass(sense) {
+    if (sense === "触碰") return "touch";
+    if (sense === "听见") return "hear";
+    if (sense === "闻到") return "smell";
+    if (sense === "尝到") return "taste";
+    return "see";
+  }
+
   function startBreathingGuide() {
     var label = document.getElementById("breathing-label");
+    var circle = document.querySelector(".breathing-circle");
     if (!label) return;
-    var inhale = true;
-
-    function changePhase() {
-      if (state.route !== "breathe") return;
-      label.textContent = inhale ? "吸" : "呼";
-      breathingTimer = window.setTimeout(function () {
-        inhale = !inhale;
-        changePhase();
-      }, inhale ? 4000 : 6000);
+    if (circle) {
+      circle.classList.remove("is-held");
+      circle.classList.remove("is-releasing");
     }
-
-    changePhase();
+    label.textContent = "按住";
   }
 
   function updateWaitClock() {
@@ -548,17 +774,79 @@
   function startWaitClock() {
     updateWaitClock();
     waitTimer = window.setInterval(updateWaitClock, 1000);
+    startWaitTrace();
+  }
+
+  function startWaitTrace() {
+    var path = document.getElementById("wait-trace-path");
+    var lived = document.getElementById("wait-trace-lived");
+    var lead = document.getElementById("wait-trace-lead");
+    if (!path || !lived || !lead) return;
+    var length = path.getTotalLength();
+    lived.style.strokeDasharray = String(length);
+
+    function drawTrace() {
+      if (state.route !== "wait") return;
+      var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var phase = reduceMotion ? 0.52 : ((Date.now() - state.waitStartedAt) % 18000) / 18000;
+      var point = path.getPointAtLength(length * phase);
+      lead.setAttribute("cx", String(point.x));
+      lead.setAttribute("cy", String(point.y));
+      lived.style.strokeDashoffset = String(length * (1 - phase));
+      if (!reduceMotion) waitTraceFrame = window.requestAnimationFrame(drawTrace);
+    }
+
+    drawTrace();
+  }
+
+  function followWaitTrace(event) {
+    if (state.route !== "wait") return;
+    var board = document.getElementById("wait-trace-board");
+    var svg = board ? board.querySelector("svg") : null;
+    var lead = document.getElementById("wait-trace-lead");
+    var finger = document.getElementById("wait-trace-finger");
+    var copy = document.getElementById("wait-trace-copy");
+    if (!board || !svg || !lead || !finger || !copy) return;
+    if (event.cancelable) event.preventDefault();
+    var point = event.touches && event.touches[0] ? event.touches[0] : event;
+    if (typeof point.clientX !== "number" || typeof point.clientY !== "number") return;
+    var svgPoint = svg.createSVGPoint();
+    svgPoint.x = point.clientX;
+    svgPoint.y = point.clientY;
+    var localPoint = svgPoint.matrixTransform(svg.getScreenCTM().inverse());
+    var x = localPoint.x;
+    var y = localPoint.y;
+    finger.setAttribute("cx", String(x));
+    finger.setAttribute("cy", String(y));
+    finger.classList.add("is-visible");
+    var leadX = Number(lead.getAttribute("cx"));
+    var leadY = Number(lead.getAttribute("cy"));
+    var distance = Math.sqrt(Math.pow(x - leadX, 2) + Math.pow(y - leadY, 2));
+    var isFollowing = distance < 34;
+    board.classList.toggle("is-following", isFollowing);
+    copy.textContent = isFollowing
+      ? "就这样。跟丢了，再找到它就好。"
+      : "慢慢找亮点。没有跟上也没关系。";
   }
 
   function updateGroundingStep() {
-    var step = GROUNDING_STEPS[state.groundIndex];
+    var step = state.groundSteps[state.groundIndex];
+    var object = document.getElementById("grounding-object");
     var sense = document.getElementById("grounding-sense");
     var prompt = document.getElementById("grounding-prompt");
     var button = app.querySelector('[data-action="ground-next"]');
-    if (!step || !sense || !prompt || !button) return;
+    if (!step || !object || !sense || !prompt || !button) return;
+    if (groundingAnimationTimer) window.clearTimeout(groundingAnimationTimer);
+    object.className = "grounding-object grounding-object--" + groundingVisualClass(step.sense);
+    restartClassAnimation(object, "is-settling");
     sense.textContent = step.sense;
     prompt.textContent = step.prompt;
+    restartClassAnimation(prompt, "is-settling");
     button.textContent = step.button;
+    groundingAnimationTimer = window.setTimeout(function () {
+      object.classList.remove("is-settling");
+      prompt.classList.remove("is-settling");
+    }, 460);
   }
 
   function composeScene(draft) {
@@ -861,10 +1149,56 @@
     }
   }
 
+  function addTouchEcho(event) {
+    var target = event.target && event.target.closest
+      ? event.target.closest("button, a")
+      : null;
+    if (!target || target.disabled) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    var point = event.touches && event.touches[0] ? event.touches[0] : event;
+    if (typeof point.clientX !== "number" || typeof point.clientY !== "number") return;
+    var shell = document.getElementById("app-shell");
+    if (!shell) return;
+    var bounds = shell.getBoundingClientRect();
+    var echo = document.createElement("span");
+    echo.className = "touch-echo";
+    echo.style.left = String(point.clientX - bounds.left) + "px";
+    echo.style.top = String(point.clientY - bounds.top) + "px";
+    shell.appendChild(echo);
+    window.setTimeout(function () {
+      if (echo.parentNode) echo.parentNode.removeChild(echo);
+    }, 1000);
+  }
+
+  function handleInteractionStart(event) {
+    var breathControl = event.target && event.target.closest
+      ? event.target.closest('[data-action="breath-touch"]')
+      : null;
+    if (breathControl) beginBreathHold(breathControl);
+    var traceBoard = event.target && event.target.closest
+      ? event.target.closest("#wait-trace-board")
+      : null;
+    if (traceBoard) followWaitTrace(event);
+  }
+
+  function handleInteractionMove(event) {
+    var traceBoard = event.target && event.target.closest
+      ? event.target.closest("#wait-trace-board")
+      : null;
+    if (traceBoard) followWaitTrace(event);
+  }
+
   function resetEmergencyRun() {
+    state.need = "";
+    state.orientStep = 0;
+    state.position = "";
     state.groundIndex = 0;
+    state.groundSteps = createGroundingRun();
     state.waitStartedAt = null;
     state.waitAcknowledged = false;
+    state.tracePath = randomTracePath();
   }
 
   app.addEventListener("click", function (event) {
@@ -875,18 +1209,31 @@
 
     if (action === "start") {
       resetEmergencyRun();
-      navigate("face");
+      navigate("checkin");
     } else if (action === "prepare") {
       navigate("prepare");
     } else if (action === "understand") {
       navigate("understand");
+    } else if (action === "choose-need") {
+      state.need = control.getAttribute("data-need") || "unclear";
+      state.orientStep = 0;
+      navigate("orient");
+    } else if (action === "choose-position") {
+      state.position = control.getAttribute("data-position") || "unclear";
+      state.orientStep = 1;
+      navigate("orient");
+    } else if (action === "orient-ready") {
+      navigate(routeForNeed());
+    } else if (action === "breath-touch") {
+      if (suppressBreathingClick) suppressBreathingClick = false;
+      else touchBreathingCircle();
     } else if (action === "next" || action === "skip") {
       if (next === "wait" && !state.waitStartedAt) state.waitStartedAt = Date.now();
       navigate(next);
     } else if (action === "words") {
       navigate("words");
     } else if (action === "ground-next") {
-      if (state.groundIndex < GROUNDING_STEPS.length - 1) {
+      if (state.groundIndex < state.groundSteps.length - 1) {
         state.groundIndex += 1;
         updateGroundingStep();
       } else {
@@ -935,6 +1282,15 @@
     }
   });
 
+  var interactionStartEvent = window.PointerEvent ? "pointerdown" : "touchstart";
+  var interactionMoveEvent = window.PointerEvent ? "pointermove" : "touchmove";
+  var interactionEndEvent = window.PointerEvent ? "pointerup" : "touchend";
+  app.addEventListener(interactionStartEvent, handleInteractionStart);
+  app.addEventListener(interactionMoveEvent, handleInteractionMove);
+  document.addEventListener(interactionEndEvent, endBreathHold);
+  if (window.PointerEvent) document.addEventListener("pointercancel", endBreathHold);
+  document.addEventListener(interactionStartEvent, addTouchEcho);
+
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) {
       clearRuntimeTimers();
@@ -953,7 +1309,9 @@
   window.__ANDING_CARD__ = {
     version: "0.1.0",
     getRoute: function () { return state.route; },
+    getNeed: function () { return state.need; },
     getGroundIndex: function () { return state.groundIndex; },
+    getGroundCount: function () { return state.groundSteps.length; },
     getCardSize: function () { return { width: CARD_WIDTH, height: CARD_HEIGHT }; },
     getWaitMessage: waitMessageFor,
     generateCard: function () {

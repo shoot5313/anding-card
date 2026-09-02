@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "安定卡 · 它会过",
-  "short_name": "安定卡",
-  "description": "发作时一次只做一件事；平静时，为自己留一张安定卡。",
+  "name": "缓一缓 · 它会过去",
+  "short_name": "缓一缓",
+  "description": "发作时一次只做一件事；平静时，为自己留一张卡片。",
   "lang": "zh-CN",
   "start_url": "./",
   "scope": "./",
@@ -38,7 +38,7 @@
     {
       "name": "我现在很难受",
       "short_name": "现在很难受",
-      "description": "直接进入安定流程",
+      "description": "直接进入陪伴流程",
       "url": "./?start=1",
       "icons": [
         {
