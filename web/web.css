@@ -1,0 +1,30 @@
+.home__secondary > .text-button {
+  display: block;
+  width: fit-content;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.web-install-button {
+  min-height: 42px;
+  color: var(--sea-glass);
+}
+
+.web-install-button:active {
+  color: var(--paper);
+}
+
+.web-install-note {
+  min-height: 20px;
+  margin: 0;
+  color: var(--paper-faint);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+@media (display-mode: standalone) {
+  .web-install-button,
+  .web-install-note {
+    display: none;
+  }
+}

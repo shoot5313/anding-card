@@ -1,0 +1,35 @@
+{
+  "name": "anding-card",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "一个为熟悉的惊恐反应准备的离线自助放松小工具。",
+  "homepage": "https://shoot5313.github.io/anding-card/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shoot5313/anding-card.git"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "test:browser": "node tests/app.browser.cjs",
+    "build:web": "node scripts/build-web.cjs",
+    "pretest:web": "npm run build:web",
+    "test:web": "node --test tests/web-artifact.cjs",
+    "test:web:artifact": "node --test tests/web-artifact.cjs",
+    "pretest:web:browser": "npm run build:web",
+    "test:web:browser": "node tests/app.browser.cjs site/index.html",
+    "preserve:web": "npm run build:web",
+    "serve:web": "python3 -m http.server 4317 --directory site",
+    "serve": "python3 -m http.server 4317",
+    "release:web": "bash scripts/build-web-release.sh",
+    "release": "bash scripts/build-release.sh"
+  },
+  "keywords": [
+    "panic",
+    "self-help",
+    "grounding",
+    "breathing",
+    "offline",
+    "mini-tool"
+  ]
+}

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#17191d">
+    <meta name="application-name" content="安定卡">
+    <meta name="version" content="0.1.0">
+    <meta name="description" content="发作时不用想太多，跟着走完几分钟；平静时，为自己准备一张存在相册里的安定卡。">
+    <title>安定卡 · 它会过</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/icon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="./assets/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/icon-180.png">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell" id="app-shell">
+      <main id="app"></main>
+      <footer class="boundary-footer" aria-label="使用边界">
+        <span>自助放松工具，不替代专业帮助</span>
+        <button class="footer-help" type="button" data-global-action="help">需要真人帮助</button>
+      </footer>
+    </div>
+    <noscript>安定卡需要 JavaScript，但不需要网络。</noscript>
+    <script src="./src/app.js" defer></script>
+  </body>
+</html>

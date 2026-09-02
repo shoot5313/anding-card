@@ -1,0 +1,7 @@
+dist/*.zip
+dist/*.png
+dist/artifact.json
+site/
+node_modules/
+*.log
+.DS_Store
