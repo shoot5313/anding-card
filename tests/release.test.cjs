@@ -20,7 +20,7 @@ test("package version and the one offline entry agree", () => {
   assert.ok(declared, "index.html must declare its version");
   assert.equal(declared[1], pkg.version);
   assert.ok(changelog.includes(`## ${pkg.version}`));
-  assert.match(html, /<meta name="application-name" content="安定卡">/);
+  assert.match(html, /<meta name="application-name" content="缓一缓">/);
   assert.match(html, /width=device-width, initial-scale=1\.0, maximum-scale=1\.0, user-scalable=no, viewport-fit=cover/);
 });
 
@@ -39,12 +39,21 @@ test("the entry obeys the mini-tool container contract", () => {
   });
 });
 
-test("the emergency route has six focused stages and an always-available human exit", () => {
-  ["面对", "接受", "飘然", "落地", "让时间过去", "你的话"].forEach((label) => {
+test("the emergency route has active, focused stages and an always-available human exit", () => {
+  ["先看最响的一个", "先接住身体", "接受", "飘然", "落地", "让时间过去", "你的话"].forEach((label) => {
     assert.ok(app.includes(label), `missing stage: ${label}`);
   });
-  assert.equal((app.match(/sense: "(?:看见|触碰|听见|闻到|尝到)"/g) || []).length, 15);
+  assert.match(app, /createGroundingRun/);
+  assert.match(app, /takeRandom\(GROUNDING_POOLS\.see, 5\)/);
+  assert.match(app, /takeRandom\(GROUNDING_POOLS\.touch, 4\)/);
+  assert.match(app, /takeRandom\(GROUNDING_POOLS\.hear, 3\)/);
   assert.match(app, /直接看给我的话/);
+  assert.match(app, /data-action="breath-touch"/);
+  assert.match(app, /grounding-object/);
+  assert.match(app, /id="wait-trace-board"/);
+  assert.match(app, /getPointAtLength/);
+  assert.match(app, /工具只是陪你走了一段/);
+  assert.match(css, /touch-echo-spread/);
   assert.match(html, /data-global-action="help"/);
   assert.match(app, /href="tel:12356"/);
   assert.doesNotMatch(runtimeSource, /进度条|完成度|打卡|成就/);
