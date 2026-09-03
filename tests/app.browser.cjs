@@ -234,6 +234,8 @@ async function run() {
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "ground");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getGroundCount()"), 15);
   assert.equal(await evaluate(sessionId, "document.querySelector('#grounding-object').classList.contains('grounding-object--see')"), true);
+  assert.match(await evaluate(sessionId, "document.querySelector('#grounding-context').textContent"), /从手机上抬起来.*环顾四周.*所在的地方/);
+  assert.equal(await evaluate(sessionId, "document.querySelector('[data-action=ground-next]').disabled"), true);
   const keyboardFit = JSON.parse(await evaluate(sessionId, `(() => {
     document.documentElement.classList.add('ground-keyboard-open');
     document.documentElement.style.setProperty('--app-height', '360px');
@@ -274,34 +276,61 @@ async function run() {
   assert.ok(groundingActionsFit.swapHeight >= 44);
   assert.ok(groundingActionsFit.swapBottom < groundingActionsFit.footerTop);
 
+  const emptyGround = JSON.parse(await evaluate(sessionId, `(() => {
+    const field = document.querySelector('#ground-answer');
+    const button = document.querySelector('[data-action=ground-next]');
+    field.value = '   ';
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    button.click();
+    return JSON.stringify({ disabled: button.disabled, index: window.__ANDING_CARD__.getGroundIndex() });
+  })()`));
+  assert.equal(emptyGround.disabled, true);
+  assert.equal(emptyGround.index, 0);
+
   const typedGround = JSON.parse(await evaluate(sessionId, `(() => {
     const field = document.querySelector('#ground-answer');
     field.value = '窗框';
     field.dispatchEvent(new Event('input', { bubbles: true }));
-    const buttonLabel = document.querySelector('[data-action=ground-next]').textContent;
-    document.querySelector('[data-action=ground-next]').click();
+    const button = document.querySelector('[data-action=ground-next]');
+    const buttonLabel = button.textContent;
+    const enabled = !button.disabled;
+    button.click();
     return JSON.stringify({
       buttonLabel,
+      enabled,
       index: window.__ANDING_CARD__.getGroundIndex(),
       cleared: document.querySelector('#ground-answer').value,
-      echo: document.querySelector('#ground-answer-echo').textContent
+      echo: document.querySelector('#ground-answer-echo').textContent,
+      nextDisabled: document.querySelector('[data-action=ground-next]').disabled
     });
   })()`));
   assert.equal(typedGround.buttonLabel, "写好了，继续");
+  assert.equal(typedGround.enabled, true);
   assert.equal(typedGround.index, 1);
   assert.equal(typedGround.cleared, "");
   assert.match(typedGround.echo, /窗框/);
+  assert.equal(typedGround.nextDisabled, true);
 
   for (let index = 0; index < 4; index += 1) {
-    await evaluate(sessionId, "document.querySelector('[data-action=ground-next]').click()");
+    await evaluate(sessionId, `(() => {
+      const field = document.querySelector('#ground-answer');
+      field.value = '眼前的东西';
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('[data-action=ground-next]').click();
+    })()`);
   }
   assert.equal(await evaluate(sessionId, "document.querySelector('#grounding-object').classList.contains('grounding-object--touch')"), true);
   for (let index = 5; index < 15; index += 1) {
-    await evaluate(sessionId, "document.querySelector('[data-action=ground-next]').click()");
+    await evaluate(sessionId, `(() => {
+      const field = document.querySelector('#ground-answer');
+      field.value = '我找到了';
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('[data-action=ground-next]').click();
+    })()`);
   }
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "wait");
   assert.match(await evaluate(sessionId, "document.querySelector('#wait-timer').textContent"), /^00:0[01]$/);
-  assert.match(await evaluate(sessionId, "document.querySelector('.grounding-recall').textContent"), /窗框/);
+  assert.match(await evaluate(sessionId, "document.querySelector('.grounding-recall').textContent"), /我找到了/);
   await evaluate(sessionId, `new Promise((resolve, reject) => {
     const started = Date.now();
     function check() {

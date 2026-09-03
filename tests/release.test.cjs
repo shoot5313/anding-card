@@ -45,7 +45,7 @@ test("the entry obeys the mini-tool container contract", () => {
 });
 
 test("the emergency route has active, focused stages and an always-available human exit", () => {
-  ["先看最响的一个", "先接住身体", "接受", "飘然", "落地", "让时间过去", "你的话"].forEach((label) => {
+  ["先看最抢注意力的一个", "先接住身体", "接受", "飘然", "落地", "让时间过去", "你的话"].forEach((label) => {
     assert.ok(app.includes(label), `missing stage: ${label}`);
   });
   assert.match(app, /createGroundingRun/);
@@ -58,6 +58,11 @@ test("the emergency route has active, focused stages and an always-available hum
   assert.match(app, /data-action="ground-swap"/);
   assert.match(app, /swapGroundingStep/);
   assert.match(app, /id="ground-answer"/);
+  assert.match(app, /把眼睛从手机上抬起来，环顾四周，在你所在的地方找/);
+  assert.match(app, /先不用看手机，听听四周，在你所在的地方找/);
+  assert.match(app, /primaryDisabled/);
+  assert.match(app, /button\.disabled = !hasAnswer/);
+  assert.doesNotMatch(app, /不方便输入，也可以直接继续/);
   assert.match(app, /groundAnswers/);
   assert.match(app, /刚才你真的找到过：/);
   assert.match(app, /data-action="wait-window"/);
@@ -120,7 +125,8 @@ test("time copy avoids promises the tool cannot make", () => {
   assert.match(app, /此刻是什么样就是什么样/);
   assert.match(app, /可以慢慢读的书/);
   assert.match(app, /《焦虑症的自救》[\s\S]*《焦虑症与恐惧症手册》[\s\S]*《直视骄阳》/);
-  assert.match(app, /惊恐很响。[\s\S]*纸老虎/);
+  assert.match(app, /惊恐总会想办法[\s\S]*夺取你全部注意力[\s\S]*它是纸老虎/);
+  assert.doesNotMatch(app, /常常[^。]{0,16}纸老虎/);
   assert.match(app, /难受是真的，危险未必是真的/);
   assert.match(app, /每次发作都给你一回练习机会/);
   assert.match(app, /经验就在这些时刻慢慢攒起来/);
@@ -134,6 +140,7 @@ test("public copy welcomes the familiar feeling without negative parallelisms", 
   assert.match(app, /哦，是你。来吧，老朋友/);
   assert.match(app + acceptanceNote, /给它一把椅子/);
   assert.doesNotMatch(publicProse, /不只是|不是[^。！？\n]{0,80}(?:也不是|更不是|而是)/);
+  assert.doesNotMatch(publicProse, /惊恐[^。！？\n]{0,50}(?:很吵|很响|吵闹)|惊恐一来，身体已经够吵了/);
 });
 
 test("the generated card is a local 1080 by 1920 PNG with manual wrapping", () => {
@@ -195,6 +202,9 @@ test("core CSS has old-WebView fallbacks and no touch-only dead ends", () => {
   assert.match(css, /\.wait-window[\s\S]*min-height: 64px/);
   assert.match(css, /\.quiet-link,[\s\S]*min-height: 44px/);
   assert.match(css, /\.fog-board[\s\S]*touch-action: none/);
+  assert.match(css, /--night: #f6faf4/);
+  assert.match(css, /--sea-glass-deep: #275f49/);
+  assert.match(css, /\.primary-button:disabled/);
 });
 
 test("release sources are comfortably below the upload ceiling", () => {

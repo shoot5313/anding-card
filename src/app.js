@@ -412,8 +412,9 @@
     ].join("");
   }
 
-  function calmScreen(label, body, primaryLabel, primaryAction, nextRoute, secondary, showDirectWords) {
+  function calmScreen(label, body, primaryLabel, primaryAction, nextRoute, secondary, showDirectWords, primaryDisabled) {
     var next = nextRoute ? ' data-next="' + escapeHtml(nextRoute) + '"' : "";
+    var disabled = primaryDisabled ? ' disabled aria-disabled="true"' : "";
     return [
       '<section class="screen screen-calm">',
       flowNav(label, showDirectWords),
@@ -425,6 +426,7 @@
       escapeHtml(primaryAction),
       '"',
       next,
+      disabled,
       ">",
       escapeHtml(primaryLabel),
       "</button>",
@@ -478,7 +480,7 @@
       '<div class="calm-ledger" aria-label="平时可以做的事">',
       '<button class="calm-entry" type="button" data-action="open-learn">',
       '<span class="calm-entry__mark">理解</span>',
-      '<span class="calm-entry__text"><strong>看懂它</strong><small>先从“为什么越怕越响”开始</small></span>',
+      '<span class="calm-entry__text"><strong>看懂它</strong><small>先看它怎样夺取全部注意力</small></span>',
       '<span class="calm-entry__arrow" aria-hidden="true">打开&nbsp;→</span>',
       "</button>",
       '<button class="calm-entry" type="button" data-action="open-practice">',
@@ -514,7 +516,7 @@
       '<button class="featured-note" type="button" data-action="open-learn-article" data-note="second-fear">',
       '<span class="featured-note__meta">《焦虑症的自救》 · 第二层恐惧</span>',
       '<strong>“那又怎样？”<br>把选择拿回来</strong>',
-      '<span>身体刚响了一声，脑子里的第二声警报为什么会跟上来？</span>',
+      '<span>身体刚起了一阵反应，脑子里的第二声警报为什么会跟上来？</span>',
       '<i aria-hidden="true">读这一篇 →</i>',
       "</button>",
       '<div class="note-shelf">',
@@ -566,7 +568,7 @@
       '<header class="note-article__header">',
       '<span>第二层恐惧</span>',
       '<h1>“那又怎样？”<br>把选择拿回来</h1>',
-      '<p>惊恐一来，身体已经够吵了。心跳、发麻、眩晕一起涌上来，脑子还要追着问：是不是要出事？怎么还没停？</p>',
+      '<p>惊恐一来，总想夺取你全部注意力。心跳、发麻、眩晕一起涌上来，脑子还要追着问：是不是要出事？怎么还没停？</p>',
       "</header>",
       '<section class="note-section">',
       '<h2>两声警报</h2>',
@@ -576,7 +578,7 @@
       '<button class="', state.learnLayer === "second" ? "is-selected" : "", '" type="button" data-action="learn-layer" data-layer="second" aria-pressed="', state.learnLayer === "second" ? "true" : "false", '"><span>第二声</span><strong>它是不是要出事？</strong></button>',
       '<p id="learn-layer-copy" aria-live="polite">', escapeHtml(learnLayerCopy()), "</p>",
       "</div>",
-      '<p>这解释了惊恐为什么会越怕越响。身体正在经历一阵反应，我又被“害怕这阵反应”裹住了。第一声需要时间，第二声却可以少添一把火。</p>',
+      '<p>这解释了惊恐怎样一步步占满注意力。身体正在经历一阵反应，我又被“害怕这阵反应”裹住了。第一声需要时间，第二声却可以少添一把火。</p>',
       "</section>",
       '<section class="note-section">',
       '<h2>四个字，留出一点空隙</h2>',
@@ -586,7 +588,7 @@
       "</section>",
       '<section class="note-section">',
       '<h2>信心要练出来</h2>',
-      '<p>每次发作都能成为一回练习。书能给地图，路还是要自己走。惊恐冲上来，我可以像认出一位吵闹的老朋友那样认出它：哦，是你。来吧，坐一会儿。</p>',
+      '<p>每次发作都能成为一回练习。书能给地图，路还是要自己走。惊恐又来夺取全部注意力时，我可以像认出老朋友那样认出它：哦，是你。来吧，坐一会儿。</p>',
       '<p>然后少检查一次，少逃一步，亲眼看着这阵感觉怎样变化。这样的经验很宝贵。一次只攒下一点也没关系，积得久了，它就是硬东西。惊恐再来时，我手里有自己走过的路。</p>',
       "</section>",
       '<aside class="note-boundary">第一次出现的症状，或与以往明显不同的症状，仍然应该交给医生判断。</aside>',
@@ -627,7 +629,7 @@
       '<section class="note-section">',
       '<h2>先给它一把椅子</h2>',
       '<p>欢迎惊恐，听起来有点反常。其实这件事很朴素。熟悉的心跳、发麻和眩晕来了，就让它们暂时待着。我省下检查、抵抗和催促的力气。</p>',
-      '<p>它像一位很吵、总爱报假警的老朋友。一进门就说有大事发生，嗓门还是那么大。可我认识它，也见过它离开。给它一把椅子，我继续过眼前这一分钟。</p>',
+      '<p>它像一位一进门就想夺走全部注意力、总爱报假警的老朋友。心跳、呼吸和最坏的念头会一下子挤到眼前。可我认识它，也见过它离开。给它一把椅子，我继续过眼前这一分钟。</p>',
       "</section>",
       '<section class="note-section">',
       '<h2>手里的枪可以放下了</h2>',
@@ -784,7 +786,7 @@
         innerPageNav("calm", "回到平时", "走过之后"),
         '<header class="reflection-page__intro">',
         '<h1>把两件事<br>放在一起看。</h1>',
-        '<p>当时的担心是真的很响；后来实际发生的事，也值得留下来。</p>',
+        '<p>当时的担心占满了注意力；后来实际发生的事，也值得留下来。</p>',
         "</header>",
         '<div class="reflection-sheet">',
         reflectionItem("当时最吓我的", state.reflection.fear),
@@ -822,12 +824,12 @@
   function renderCheckin() {
     return [
       '<section class="screen screen-calm screen-choice">',
-      flowNav("先看最响的一个", true),
+      flowNav("先看最抢注意力的一个", true),
       '<div class="screen-calm__body">',
       '<h1 class="choice-title">现在最抢注意力的是哪一种？</h1>',
-      '<p class="support-copy">名字可以很粗略。哪个最响，就先告诉我哪个。</p>',
+      '<p class="support-copy">名字可以很粗略。哪个最抢注意力，就先告诉我哪个。</p>',
       '<div class="choice-grid">',
-      '<button class="choice-button" type="button" data-action="choose-need" data-need="heart"><span>心跳很快</span><small>身体反应很响</small></button>',
+      '<button class="choice-button" type="button" data-action="choose-need" data-need="heart"><span>心跳很快</span><small>注意力全在心跳上</small></button>',
       '<button class="choice-button" type="button" data-action="choose-need" data-need="breath"><span>呼吸很乱</span><small>总觉得吸不够</small></button>',
       '<button class="choice-button" type="button" data-action="choose-need" data-need="unreal"><span>周围不真实</span><small>像隔着一层</small></button>',
       '<button class="choice-button" type="button" data-action="choose-need" data-need="control"><span>怕会失控</span><small>怕自己撑不住</small></button>',
@@ -886,11 +888,11 @@
     var title = "熟悉的感觉又来了。";
     var copy = "认出它：哦，是你。来吧，老朋友。你可以待着，我也慢慢过这一分钟。";
     if (state.need === "heart") {
-      title = "心跳很响。结论先放一放。";
+      title = "注意力全被心跳抓住了。结论先放一放。";
       copy = "让心脏自己跳一会儿。每一下都去检查会很累，先把注意力留给眼前。";
     } else if (state.need === "control") {
       title = "“会失控”是一个很吓人的念头。";
-      copy = "先叫它一声“念头”。它很响，身体仍然可以找到一个接触点。";
+      copy = "先叫它一声“念头”。它想抓走全部注意力，身体仍然可以找到一个接触点。";
     }
     var body = [
       '<h1 class="display-title">', escapeHtml(title), "</h1>",
@@ -952,6 +954,9 @@
       '<span class="grounding-sense" id="grounding-sense">',
       escapeHtml(step.sense),
       "</span>",
+      '<p class="grounding-context" id="grounding-context">',
+      escapeHtml(groundingContext(step.sense)),
+      "</p>",
       '<h1 class="grounding-prompt" id="grounding-prompt" aria-live="polite">',
       escapeHtml(step.prompt),
       "</h1>",
@@ -971,7 +976,7 @@
       '<button class="quiet-link" type="button" data-action="skip" data-next="wait">跳过这步&nbsp;→</button>',
       "</div>",
     ].join("");
-    return calmScreen("落地", body, step.button, "ground-next", "", secondary)
+    return calmScreen("落地", body, step.button, "ground-next", "", secondary, true, true)
       .replace("screen screen-calm", "screen screen-calm screen-ground");
   }
 
@@ -1238,10 +1243,10 @@
     return [
       '<section class="screen screen-scroll">',
       innerPageNav("understand-back", state.understandReturnRoute === "learn" ? "回到看懂它" : "回到首页", "先知道这些就够"),
-      '<h1 class="page-title">惊恐很响。<br>可它常常<br>只是一只纸老虎。</h1>',
+      '<h1 class="page-title">惊恐总会想办法<br>夺取你全部注意力。<br>可它是纸老虎。</h1>',
       '<p class="page-lead understand-lead">纸老虎也能把人吓得发抖。心跳、窒息感、眩晕，还有“要出事了”的念头，全都很难受。你正在承受一阵很强的身体反应。矫情、意志薄弱，和这件事毫无关系。</p>',
-      '<section class="info-section"><h2>难受是真的，危险未必是真的</h2><p>惊恐像身体的警报突然拉响。如果这些反应已经就医排查过，你也熟悉它们，那么感觉很强烈，和眼前真的有危险是两回事。惊恐靠声势抢走了全部注意力。</p></section>',
-      '<section class="info-section"><h2>纸老虎越怕越响</h2><p>身体先响一声，脑子立刻追问：“是不是要出事？”接着反复检查、赶紧逃开、催它马上停。这些动作又在告诉身体：警报是对的，危险很近。第二层恐惧就这样把第一层反应越抬越高。你只是被这个循环卷进去了。</p></section>',
+      '<section class="info-section"><h2>难受是真的，危险未必是真的</h2><p>惊恐一来，身体的警报会把注意力抓住。如果这些反应已经就医排查过，你也熟悉它们，那么感觉很强烈，和眼前真的有危险是两回事。它的第一招，就是把你的目光牢牢按在心跳、呼吸和最坏的念头上。</p></section>',
+      '<section class="info-section"><h2>它靠注意力长大</h2><p>身体先起一阵反应，脑子立刻追问：“是不是要出事？”接着反复检查、赶紧逃开、催它马上停。这些动作又在告诉身体：警报是对的，危险很近。第二层恐惧就这样把第一层反应越抬越高。你只是被这个循环卷进去了。</p></section>',
       '<section class="info-section"><h2>老朋友又来了</h2><p>下一次惊恐露面，可以先认出它：“哦，是你。来吧，老朋友。你坐一会儿，我也留在这里。”欢迎它，能省下赶它出门的力气。</p><p>每次发作都给你一回练习机会。书能给方向，路还得亲自走。惊恐冲上来时，少检查一次，少逃一步，亲眼看着感觉怎样变化。要对付的是那道“它一来我就必须逃”的命令。</p><blockquote class="paper-tiger-line">克服惊恐，要把道理带进一次次发作里。<br>经验就在这些时刻慢慢攒起来。</blockquote></section>',
       '<section class="info-section"><h2>把经验带走</h2><p>一次练习未必马上让感觉变轻。强烈感觉通常会缓下来，每个人走完这一阵的时间各不相同。十分钟只是数字，拿它给自己打分很吃亏。今天只少跟着警报跑一步，这一步也会留在脚下。</p></section>',
       '<section class="info-section">',
@@ -1390,9 +1395,17 @@
     return "例如：窗框";
   }
 
+  function groundingContext(sense) {
+    if (sense === "看见") return "把眼睛从手机上抬起来，环顾四周，在你所在的地方找。";
+    if (sense === "听见") return "先不用看手机，听听四周，在你所在的地方找。";
+    if (sense === "触碰") return "把手伸向身边，在你所在的地方找。";
+    if (sense === "闻到") return "留意你所在的地方和手边的东西。";
+    return "把注意力放到嘴里此刻真实的感觉上。";
+  }
+
   function groundingAnswerEcho() {
     if (!state.groundAnswers.length) {
-      return "找到后，写一个词。不方便输入，也可以直接继续。";
+      return "找到后写一个词。“找到了”会在写完后亮起来。";
     }
     var latest = state.groundAnswers[state.groundAnswers.length - 1];
     var tails = {
@@ -1422,7 +1435,10 @@
     var button = app.querySelector('[data-action="ground-next"]');
     var step = state.groundSteps[state.groundIndex];
     if (!button || !step) return;
-    button.textContent = cleanText(event.target.value, 16) ? "写好了，继续" : step.button;
+    var hasAnswer = Boolean(cleanText(event.target.value, 16));
+    button.textContent = hasAnswer ? "写好了，继续" : step.button;
+    button.disabled = !hasAnswer;
+    button.setAttribute("aria-disabled", String(!hasAnswer));
   }
 
   function swapGroundingStep() {
@@ -1623,9 +1639,9 @@
     if (!context) return;
     var random = seededFogRandom(seed);
     var palettes = [
-      { top: "#344346", bottom: "#172529", hill: "#223438", line: "rgba(200,216,207,0.34)", soft: "rgba(137,171,162,0.22)" },
-      { top: "#3b3d3a", bottom: "#20282a", hill: "#2b3331", line: "rgba(220,213,194,0.31)", soft: "rgba(157,174,163,0.20)" },
-      { top: "#303c45", bottom: "#1b252d", hill: "#25343d", line: "rgba(200,214,217,0.32)", soft: "rgba(132,164,166,0.22)" },
+      { top: "#dcecf0", bottom: "#bddcc9", hill: "#79aa8b", line: "rgba(31,75,59,0.42)", soft: "rgba(116,143,197,0.34)" },
+      { top: "#ebe7f6", bottom: "#c9e2d2", hill: "#8ab497", line: "rgba(39,95,73,0.4)", soft: "rgba(116,143,197,0.3)" },
+      { top: "#d9edf2", bottom: "#d0dcef", hill: "#72a689", line: "rgba(31,75,59,0.4)", soft: "rgba(84,124,177,0.3)" },
     ];
     var palette = palettes[seed % palettes.length];
     context.setTransform(scale, 0, 0, scale, 0, 0);
@@ -1639,8 +1655,8 @@
     var glowX = width * (0.18 + random() * 0.64);
     var glowY = height * (0.1 + random() * 0.22);
     var glow = context.createRadialGradient(glowX, glowY, 2, glowX, glowY, width * 0.34);
-    glow.addColorStop(0, "rgba(230,226,207,0.22)");
-    glow.addColorStop(1, "rgba(230,226,207,0)");
+    glow.addColorStop(0, "rgba(255,254,249,0.76)");
+    glow.addColorStop(1, "rgba(255,254,249,0)");
     context.fillStyle = glow;
     context.fillRect(0, 0, width, height);
 
@@ -1714,7 +1730,7 @@
       context.fill();
     }
 
-    context.strokeStyle = "rgba(235,230,219,0.18)";
+    context.strokeStyle = "rgba(255,254,249,0.48)";
     for (var arc = 0; arc < 4; arc += 1) {
       context.beginPath();
       context.arc(width * (0.58 + random() * 0.18), height * (0.19 + random() * 0.2), 8 + arc * 7, Math.PI * (0.15 + random() * 0.25), Math.PI * (1.1 + random() * 0.35));
@@ -1728,13 +1744,13 @@
     var random = seededFogRandom(seed + 937);
     context.setTransform(scale, 0, 0, scale, 0, 0);
     var mist = context.createLinearGradient(0, 0, width, height);
-    mist.addColorStop(0, "#353a3b");
-    mist.addColorStop(0.5, "#272d2f");
-    mist.addColorStop(1, "#3a3b38");
+    mist.addColorStop(0, "#e2ece7");
+    mist.addColorStop(0.5, "#d4e2dc");
+    mist.addColorStop(1, "#e6e8f1");
     context.fillStyle = mist;
     context.fillRect(0, 0, width, height);
     for (var index = 0; index < 38; index += 1) {
-      context.fillStyle = index % 2 === 0 ? "rgba(235,230,219,0.025)" : "rgba(130,154,145,0.03)";
+      context.fillStyle = index % 2 === 0 ? "rgba(255,254,249,0.24)" : "rgba(67,130,99,0.08)";
       context.beginPath();
       context.arc(random() * width, random() * height, 1 + random() * 3.5, 0, Math.PI * 2);
       context.fill();
@@ -1910,18 +1926,22 @@
     var step = state.groundSteps[state.groundIndex];
     var object = document.getElementById("grounding-object");
     var sense = document.getElementById("grounding-sense");
+    var context = document.getElementById("grounding-context");
     var prompt = document.getElementById("grounding-prompt");
     var button = app.querySelector('[data-action="ground-next"]');
     var answer = document.getElementById("ground-answer");
     var answerEcho = document.getElementById("ground-answer-echo");
-    if (!step || !object || !sense || !prompt || !button) return;
+    if (!step || !object || !sense || !context || !prompt || !button) return;
     if (groundingAnimationTimer) window.clearTimeout(groundingAnimationTimer);
     object.className = "grounding-object grounding-object--" + groundingVisualClass(step.sense);
     restartClassAnimation(object, "is-settling");
     sense.textContent = step.sense;
+    context.textContent = groundingContext(step.sense);
     prompt.textContent = step.prompt;
     restartClassAnimation(prompt, "is-settling");
     button.textContent = step.button;
+    button.disabled = true;
+    button.setAttribute("aria-disabled", "true");
     if (answer) {
       answer.value = "";
       answer.setAttribute("placeholder", groundingAnswerPlaceholder(step.sense));
@@ -2083,47 +2103,47 @@
       return wrapCanvasText(context, text, width).length;
     }
 
-    setText(canvasFont(titleSize, serif, 500), "#ebe6db");
+    setText(canvasFont(titleSize, serif, 500), "#193f33");
     if (shouldDraw) context.fillText("给发作时的我", x, y);
     y += 92 * scale;
 
-    setText(canvasFont(29 * scale, sans, 600), "#9eaaa4");
+    setText(canvasFont(29 * scale, sans, 600), "#4d7665");
     if (shouldDraw) context.fillText("面对 · 接受 · 飘然 · 等它过去", x, y);
     y += 66 * scale;
 
     if (shouldDraw) {
-      context.fillStyle = "rgba(235,230,219,0.20)";
+      context.fillStyle = "rgba(31,75,59,0.18)";
       context.fillRect(x, y, maxWidth, Math.max(1, 2 * scale));
     }
     y += 42 * scale;
 
     function sectionLabel(label) {
-      setText(canvasFont(labelSize, sans, 600), "#9eaaa4");
+      setText(canvasFont(labelSize, sans, 600), "#4d7665");
       if (shouldDraw) context.fillText(label, x, y);
       y += labelLine;
     }
 
     sectionLabel("我的锚点");
-    setText(canvasFont(58 * scale, serif, 500), "#ebe6db");
+    setText(canvasFont(58 * scale, serif, 500), "#193f33");
     if (shouldDraw) y = drawWrappedText(context, anchor, x, y, maxWidth, 76 * scale);
     else y += measureLines(anchor, maxWidth) * 76 * scale;
     y += sectionGap;
 
     sectionLabel("我熟悉的地方");
-    setText(canvasFont(bodySize, serif, 400), "#d8d2c6");
+    setText(canvasFont(bodySize, serif, 400), "#36594c");
     if (shouldDraw) y = drawWrappedText(context, scene, x, y, maxWidth, bodyLine);
     else y += measureLines(scene, maxWidth) * bodyLine;
     y += sectionGap;
 
     sectionLabel("我想对自己说");
-    setText(canvasFont(bodySize, serif, 400), "#ebe6db");
+    setText(canvasFont(bodySize, serif, 400), "#193f33");
     words.forEach(function (word) {
       if (shouldDraw) {
-        context.fillStyle = "#829a91";
+        context.fillStyle = "#438263";
         context.beginPath();
         context.arc(x + 8 * scale, y + 27 * scale, 5 * scale, 0, Math.PI * 2);
         context.fill();
-        context.fillStyle = "#ebe6db";
+        context.fillStyle = "#193f33";
         y = drawWrappedText(context, word, x + 30 * scale, y, maxWidth - 30 * scale, bodyLine);
       } else {
         y += measureLines(word, maxWidth - 30 * scale) * bodyLine;
@@ -2133,7 +2153,7 @@
     y += 12 * scale;
 
     sectionLabel("到时可以做");
-    setText(canvasFont(actionSize, sans, 500), "#d8d2c6");
+    setText(canvasFont(actionSize, sans, 500), "#36594c");
     var rowHeight = 60 * scale;
     actions.forEach(function (action, index) {
       var column = index % 2;
@@ -2141,9 +2161,9 @@
       var actionX = x + column * 455;
       var actionY = y + row * rowHeight;
       if (shouldDraw) {
-        context.fillStyle = "#829a91";
+        context.fillStyle = "#438263";
         context.fillText("·", actionX, actionY);
-        context.fillStyle = "#d8d2c6";
+        context.fillStyle = "#36594c";
         context.fillText(action, actionX + 25 * scale, actionY);
       }
     });
@@ -2159,19 +2179,19 @@
     if (!context) return "";
 
     var background = context.createLinearGradient(0, 0, CARD_WIDTH, CARD_HEIGHT);
-    background.addColorStop(0, "#25282c");
-    background.addColorStop(0.55, "#1a1c20");
-    background.addColorStop(1, "#1c1a17");
+    background.addColorStop(0, "#f8fbf5");
+    background.addColorStop(0.55, "#e8f3ea");
+    background.addColorStop(1, "#e8edf7");
     context.fillStyle = background;
     context.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
 
     var halo = context.createRadialGradient(880, 190, 0, 880, 190, 360);
-    halo.addColorStop(0, "rgba(130,154,145,0.16)");
-    halo.addColorStop(1, "rgba(130,154,145,0)");
+    halo.addColorStop(0, "rgba(116,143,197,0.26)");
+    halo.addColorStop(1, "rgba(116,143,197,0)");
     context.fillStyle = halo;
     context.fillRect(500, 0, 580, 600);
 
-    context.strokeStyle = "rgba(235,230,219,0.11)";
+    context.strokeStyle = "rgba(31,75,59,0.16)";
     context.lineWidth = 2;
     roundedRect(context, 58, 58, 964, 1804, 52);
     context.stroke();
@@ -2183,14 +2203,14 @@
     var scale = measuredBottom > available ? Math.max(0.84, available / measuredBottom) : 1;
     drawCardContent(context, draft, scale, true);
 
-    context.fillStyle = "rgba(235,230,219,0.18)";
+    context.fillStyle = "rgba(31,75,59,0.18)";
     context.fillRect(94, footerTop, 892, 2);
     context.textBaseline = "top";
     context.font = canvasFont(39, '"PingFang SC", "Microsoft YaHei", sans-serif', 500);
-    context.fillStyle = "#9eaaa4";
+    context.fillStyle = "#4d7665";
     context.fillText("写于 " + localDateString() + "，那天我状态很好", 94, footerTop + 38);
     context.font = canvasFont(44, '"Songti SC", "STSong", serif', 400);
-    context.fillStyle = "#d8d2c6";
+    context.fillStyle = "#36594c";
     context.fillText("我记得它退下去以后，胸口会重新平静。", 94, footerTop + 102);
     context.fillText("那个镇定、有勇气的自己也是真的。", 94, footerTop + 157);
     return canvas.toDataURL("image/png");
@@ -2434,7 +2454,12 @@
     } else if (action === "ground-swap") {
       swapGroundingStep();
     } else if (action === "ground-next") {
-      recordGroundingAnswer();
+      var groundAnswer = recordGroundingAnswer();
+      if (!groundAnswer) {
+        var groundField = document.getElementById("ground-answer");
+        if (groundField) groundField.focus();
+        return;
+      }
       if (state.groundIndex < state.groundSteps.length - 1) {
         state.groundIndex += 1;
         updateGroundingStep();

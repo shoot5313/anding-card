@@ -38,7 +38,8 @@ test("the manifest is installable and keeps the emergency shortcut", () => {
   assert.equal(manifest.start_url, "./");
   assert.equal(manifest.scope, "./");
   assert.equal(manifest.display, "standalone");
-  assert.equal(manifest.background_color, "#17191d");
+  assert.equal(manifest.background_color, "#f6faf4");
+  assert.equal(manifest.theme_color, "#275f49");
   assert.equal(manifest.shortcuts[0].url, "./?start=1");
   assert.ok(manifest.icons.some((icon) => icon.sizes === "192x192"));
   assert.ok(manifest.icons.some((icon) => icon.sizes === "512x512"));
