@@ -163,6 +163,32 @@ test("the calm route has four useful branches without turning them into retentio
   assert.doesNotMatch(app, /连续学习|阅读天数|完成百分比/);
 });
 
+test("the calm practice is playful, stoppable, and makes no physiological claim", () => {
+  ["吹一片叶子", "机器人下班", "小蜜蜂试音"].forEach((label) => {
+    assert.ok(app.includes(label), `missing practice: ${label}`);
+  });
+  assert.match(app, /data-action="practice-select"/);
+  assert.match(app, /data-action="practice-start"/);
+  assert.match(app, /data-action="practice-hold"/);
+  assert.match(app, /data-action="practice-finish"/);
+  assert.match(app, /data-action="practice-feeling"/);
+  assert.match(app, /beginLeafInhale/);
+  assert.match(app, /beginLeafExhale/);
+  assert.match(app, /beginPracticeHold/);
+  assert.match(app, /endPracticeHold/);
+  assert.match(app, /不要刻意吸深或憋气；头晕、发麻或胸闷加重就停/);
+  assert.match(app, /它不听麦克风，只负责把波纹画出来/);
+  assert.match(app, /这个选择不会被保存/);
+  assert.match(app, /if \(state\.practiceRound >= 4\)/);
+  assert.doesNotMatch(app, /激活副交感|刺激迷走神经|调节迷走神经|纠正二氧化碳|心率变异性/);
+  assert.doesNotMatch(app, /练习分数|练习记录|连续练习|今日目标/);
+  assert.match(css, /@keyframes practice-leaf-sail/);
+  assert.match(css, /@keyframes practice-bee-wave/);
+  assert.match(css, /\.practice-stage[\s\S]*touch-action: none/);
+  assert.match(css, /\.practice-feeling-choices button[\s\S]*min-height: 62px/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.practice-leaf-scene\.is-exhaling/);
+});
+
 test("time copy avoids promises the tool cannot make", () => {
   assert.match(app, /每个人走完这一阵的时间各不相同/);
   assert.match(app, /此刻是什么样就是什么样/);

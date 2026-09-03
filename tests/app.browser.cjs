@@ -739,9 +739,146 @@ async function run() {
 
   await evaluate(sessionId, "document.querySelector('[data-action=open-practice]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "practice");
-  await evaluate(sessionId, "document.querySelector('[data-focus=feet]').click()");
-  await evaluate(sessionId, "document.querySelector('[data-quality=\"有压力\"]').click()");
-  assert.match(await evaluate(sessionId, "document.querySelector('.practice-result').textContent"), /有压力/);
+  const practiceChooser = JSON.parse(await evaluate(sessionId, `JSON.stringify({
+    state: window.__ANDING_CARD__.getPracticeState(),
+    modes: document.querySelectorAll('[data-action=practice-select]').length,
+    copy: document.querySelector('.practice-menu__intro').textContent,
+    safety: document.querySelector('.practice-safety').textContent,
+    overflow: document.documentElement.scrollWidth > innerWidth
+  })`));
+  assert.deepEqual(practiceChooser.state, { mode: "", stage: "choose", motion: "idle", round: 0, feeling: "" });
+  assert.equal(practiceChooser.modes, 3);
+  assert.match(practiceChooser.copy, /叶子、机器人和小蜜蜂/);
+  assert.match(practiceChooser.safety, /不要刻意吸深或憋气/);
+  assert.equal(practiceChooser.overflow, false);
+
+  await send("Emulation.setDeviceMetricsOverride", {
+    width: 320,
+    height: 568,
+    deviceScaleFactor: 2,
+    mobile: true,
+    screenWidth: 320,
+    screenHeight: 568,
+  }, sessionId);
+  await evaluate(sessionId, "new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+  const narrowPractice = JSON.parse(await evaluate(sessionId, `(() => {
+    const card = document.querySelector('.practice-mode-card');
+    return JSON.stringify({
+      width: document.documentElement.scrollWidth,
+      viewport: innerWidth,
+      cardHeight: card.getBoundingClientRect().height,
+      backHeight: document.querySelector('.page-back').getBoundingClientRect().height
+    });
+  })()`));
+  assert.equal(narrowPractice.width, narrowPractice.viewport);
+  assert.ok(narrowPractice.cardHeight >= 48);
+  assert.ok(narrowPractice.backHeight >= 44);
+  await send("Emulation.setDeviceMetricsOverride", {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 2,
+    mobile: true,
+    screenWidth: 390,
+    screenHeight: 844,
+  }, sessionId);
+  await evaluate(sessionId, "new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+
+  await evaluate(sessionId, "document.querySelector('[data-practice=leaf]').click()");
+  assert.deepEqual(
+    JSON.parse(await evaluate(sessionId, "JSON.stringify(window.__ANDING_CARD__.getPracticeState())")),
+    { mode: "leaf", stage: "setup", motion: "idle", round: 0, feeling: "" }
+  );
+  assert.match(await evaluate(sessionId, "document.querySelector('#practice-cue').textContent"), /没在考勤/);
+  const activeLeaf = JSON.parse(await evaluate(sessionId, `(() => {
+    document.querySelector('[data-action=practice-start]').click();
+    return JSON.stringify({
+      state: window.__ANDING_CARD__.getPracticeState(),
+      inhaling: document.querySelector('#practice-leaf-scene').classList.contains('is-inhaling'),
+      cue: document.querySelector('#practice-cue').textContent,
+      controls: document.querySelectorAll('[data-action=practice-finish]').length
+    });
+  })()`));
+  assert.deepEqual(activeLeaf.state, { mode: "leaf", stage: "active", motion: "inhale", round: 0, feeling: "" });
+  assert.equal(activeLeaf.inhaling, true);
+  assert.match(activeLeaf.cue, /自然吸一小口/);
+  assert.equal(activeLeaf.controls, 1);
+  await evaluate(sessionId, "document.querySelector('[data-action=practice-finish]').click()");
+  assert.equal(await evaluate(sessionId, "document.querySelectorAll('[data-action=practice-feeling]').length"), 3);
+  await evaluate(sessionId, "document.querySelector('[data-feeling=same]').click()");
+  assert.match(await evaluate(sessionId, "document.querySelector('.practice-result').textContent"), /不交作业/);
+  assert.deepEqual(
+    JSON.parse(await evaluate(sessionId, "JSON.stringify(Object.keys(localStorage).filter((key) => /practice|feeling/i.test(key)))")),
+    []
+  );
+
+  await evaluate(sessionId, "document.querySelector('[data-action=practice-home]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-practice=robot]').click()");
+  const heldRobot = JSON.parse(await evaluate(sessionId, `(() => {
+    const robot = document.querySelector('[data-practice-hold=robot]');
+    robot.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', pointerId: 71 }));
+    return JSON.stringify({
+      state: window.__ANDING_CARD__.getPracticeState(),
+      held: robot.classList.contains('is-held'),
+      pressed: robot.getAttribute('aria-pressed'),
+      cue: document.querySelector('#practice-cue').textContent
+    });
+  })()`));
+  assert.equal(heldRobot.state.motion, "hold");
+  assert.equal(heldRobot.held, true);
+  assert.equal(heldRobot.pressed, "true");
+  assert.match(heldRobot.cue, /不拿加班奖/);
+  const releasedRobot = JSON.parse(await evaluate(sessionId, `(() => {
+    document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch', pointerId: 71 }));
+    const robot = document.querySelector('[data-practice-hold=robot]');
+    return JSON.stringify({
+      state: window.__ANDING_CARD__.getPracticeState(),
+      releasing: robot.classList.contains('is-releasing'),
+      pressed: robot.getAttribute('aria-pressed'),
+      cue: document.querySelector('#practice-cue').textContent
+    });
+  })()`));
+  assert.equal(releasedRobot.state.motion, "releasing");
+  assert.equal(releasedRobot.state.round, 1);
+  assert.equal(releasedRobot.releasing, true);
+  assert.equal(releasedRobot.pressed, "false");
+  assert.match(releasedRobot.cue, /松开/);
+  await evaluate(sessionId, "document.querySelector('[data-action=practice-finish]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-feeling=softer]').click()");
+  assert.match(await evaluate(sessionId, "document.querySelector('.practice-result').textContent"), /先不追/);
+
+  await evaluate(sessionId, "document.querySelector('[data-action=practice-home]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-practice=bee]').click()");
+  const heldBee = JSON.parse(await evaluate(sessionId, `(() => {
+    const bee = document.querySelector('[data-practice-hold=bee]');
+    bee.click();
+    return JSON.stringify({
+      state: window.__ANDING_CARD__.getPracticeState(),
+      held: bee.classList.contains('is-held'),
+      pressed: bee.getAttribute('aria-pressed'),
+      privacy: document.querySelector('#practice-privacy').textContent,
+      cue: document.querySelector('#practice-cue').textContent
+    });
+  })()`));
+  assert.equal(heldBee.state.motion, "hold");
+  assert.equal(heldBee.held, true);
+  assert.equal(heldBee.pressed, "true");
+  assert.match(heldBee.privacy, /不听麦克风/);
+  assert.match(heldBee.cue, /走到尾巴/);
+  const releasedBee = JSON.parse(await evaluate(sessionId, `(() => {
+    document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' }));
+    const bee = document.querySelector('[data-practice-hold=bee]');
+    return JSON.stringify({
+      state: window.__ANDING_CARD__.getPracticeState(),
+      releasing: bee.classList.contains('is-releasing'),
+      cue: document.querySelector('#practice-cue').textContent
+    });
+  })()`));
+  assert.equal(releasedBee.state.motion, "releasing");
+  assert.equal(releasedBee.releasing, true);
+  assert.match(releasedBee.cue, /自己会降落/);
+  await evaluate(sessionId, "document.querySelector('[data-action=practice-finish]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-feeling=uncomfortable]').click()");
+  assert.match(await evaluate(sessionId, "document.querySelector('.practice-result').textContent"), /反对票/);
   await evaluate(sessionId, "document.querySelector('[data-action=calm]').click()");
 
   await evaluate(sessionId, "document.querySelector('[data-action=open-reflection]').click()");

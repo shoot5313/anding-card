@@ -994,59 +994,926 @@ textarea:focus {
   line-height: 1.5;
 }
 
-.practice-choices,
-.quality-choices {
-  margin-top: 8px;
+.practice-tool {
+  padding-bottom: 92px;
 }
 
-.practice-choices button {
+.practice-menu__intro {
+  padding-bottom: 19px;
+}
+
+.practice-menu__intro > p {
+  max-width: 450px;
+}
+
+.practice-menu {
+  border-top: 1px solid var(--line);
+}
+
+.practice-mode-card {
+  display: grid;
+  width: 100%;
+  min-height: 112px;
+  grid-template-columns: 86px 1fr 24px;
+  align-items: center;
+  padding: 13px 8px 13px 3px;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--paper);
+  text-align: left;
+  transition: background 180ms ease-in-out, transform 180ms ease-in-out;
+}
+
+.practice-mode-card:active {
+  background: rgba(41, 73, 61, 0.66);
+  transform: translateX(2px);
+}
+
+.practice-mode-card__art {
+  position: relative;
+  display: block;
+  width: 70px;
+  height: 76px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 24px 17px 25px 16px;
+  background: #17362f;
+}
+
+.practice-mode-card__art--robot {
+  border-radius: 16px 24px 15px 25px;
+  background: #273b4d;
+}
+
+.practice-mode-card__art--bee {
+  border-radius: 25px 17px 18px 26px;
+  background: #3c3c31;
+}
+
+.practice-mode-card__copy {
+  display: block;
+  min-width: 0;
+  padding: 1px 12px 0 2px;
+}
+
+.practice-mode-card__tag {
+  display: block;
+  width: 34px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid rgba(174, 191, 217, 0.48);
+  color: var(--bluebell);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.7;
+  letter-spacing: 0.12em;
+}
+
+.practice-mode-card__copy strong,
+.practice-mode-card__copy small {
+  display: block;
+}
+
+.practice-mode-card__copy strong {
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.practice-mode-card__copy small {
+  overflow: hidden;
+  color: var(--paper-dim);
+  font-size: 12px;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practice-mode-card__arrow {
+  color: var(--sea-glass-deep);
+  font-size: 20px;
+}
+
+.practice-mini-leaf,
+.practice-mini-robot,
+.practice-mini-bee {
+  position: absolute;
+  display: block;
+}
+
+.practice-mini-leaf {
+  top: 22px;
+  left: 20px;
+  width: 32px;
+  height: 27px;
+  border-radius: 86% 12% 78% 19%;
+  background: #83b29a;
+  box-shadow: 13px 15px 0 -11px rgba(174, 191, 217, 0.62), 26px 23px 0 -12px rgba(174, 191, 217, 0.34);
+  transform: rotate(-18deg);
+}
+
+.practice-mini-leaf i {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 26px;
+  height: 1px;
+  background: #315e4c;
+  transform: rotate(38deg);
+}
+
+.practice-mini-robot {
+  top: 18px;
+  left: 20px;
+  width: 31px;
+  height: 25px;
+  border: 2px solid #aebfd9;
+  border-radius: 7px;
+  background: #4b6775;
+}
+
+.practice-mini-robot::before {
+  position: absolute;
+  top: -9px;
+  left: 14px;
+  width: 2px;
+  height: 8px;
+  background: #aebfd9;
+  content: "";
+}
+
+.practice-mini-robot::after {
+  position: absolute;
+  top: 29px;
+  left: 2px;
+  width: 27px;
+  height: 20px;
+  border-radius: 5px 5px 8px 8px;
+  background: #6c8d91;
+  content: "";
+}
+
+.practice-mini-robot i,
+.practice-mini-robot b {
+  position: absolute;
+  z-index: 1;
+  top: 9px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #f2ebdd;
+}
+
+.practice-mini-robot i {
+  left: 7px;
+}
+
+.practice-mini-robot b {
+  right: 7px;
+}
+
+.practice-mini-bee {
+  top: 27px;
+  left: 17px;
+  width: 38px;
+  height: 25px;
+  border: 2px solid #e0c87e;
+  border-radius: 52% 45% 48% 54%;
+  background: #d9b657;
+  box-shadow: inset 9px 0 0 #5a5441, inset 17px 0 0 #d9b657, inset 24px 0 0 #5a5441;
+}
+
+.practice-mini-bee::before,
+.practice-mini-bee::after {
+  position: absolute;
+  top: -13px;
+  width: 17px;
+  height: 15px;
+  border: 1px solid rgba(220, 231, 225, 0.72);
+  border-radius: 70% 45%;
+  content: "";
+}
+
+.practice-mini-bee::before {
+  left: 4px;
+  transform: rotate(-18deg);
+}
+
+.practice-mini-bee::after {
+  right: 3px;
+  transform: rotate(18deg);
+}
+
+.practice-mini-bee i,
+.practice-mini-bee b {
+  position: absolute;
+  right: -9px;
+  width: 12px;
+  height: 1px;
+  background: rgba(174, 191, 217, 0.64);
+}
+
+.practice-mini-bee i {
+  top: 7px;
+}
+
+.practice-mini-bee b {
+  top: 14px;
+  width: 7px;
+}
+
+.practice-safety {
+  display: block;
+  margin-top: 21px;
+  padding: 14px 16px;
+  border-left: 2px solid rgba(174, 191, 217, 0.64);
+  background: rgba(41, 57, 76, 0.48);
+  color: var(--paper-dim);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.practice-safety strong,
+.practice-safety span {
+  display: block;
+}
+
+.practice-safety strong {
+  color: var(--paper);
+  font-size: 13px;
+}
+
+.practice-mode-header {
+  padding: 19px 0 14px;
+}
+
+.practice-mode-header h1,
+.practice-checkin h1 {
+  margin: 0;
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  font-size: 34px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.practice-mode-header p {
+  max-width: 470px;
+  margin: 10px 0 0;
+  color: var(--paper-dim);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.practice-leaf-scene,
+.practice-stage {
+  position: relative;
+  width: 100%;
+  height: 264px;
+  overflow: hidden;
+  border: 1px solid rgba(174, 191, 217, 0.24);
+  border-radius: 31px 22px 34px 20px;
+  background: #122f32;
+  box-shadow: inset 0 -42px 0 rgba(11, 35, 33, 0.36), 0 17px 34px rgba(0, 13, 10, 0.24);
+}
+
+.practice-leaf-moon {
+  position: absolute;
+  top: 30px;
+  right: 38px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #d9d4c2;
+  box-shadow: 0 0 0 8px rgba(217, 212, 194, 0.05), 0 0 30px rgba(217, 212, 194, 0.13);
+}
+
+.practice-leaf-moon::after {
+  position: absolute;
+  top: -3px;
+  left: -8px;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #122f32;
+  content: "";
+}
+
+.practice-leaf-star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(242, 235, 221, 0.7);
+}
+
+.practice-leaf-star--one {
+  top: 53px;
+  left: 20%;
+}
+
+.practice-leaf-star--two {
+  top: 84px;
+  left: 47%;
+}
+
+.practice-leaf-ripple {
+  position: absolute;
+  bottom: 49px;
+  width: 78px;
+  height: 17px;
+  border: 1px solid rgba(119, 171, 144, 0.3);
+  border-radius: 50%;
+  opacity: 0.48;
+}
+
+.practice-leaf-ripple--one {
+  left: 11%;
+}
+
+.practice-leaf-ripple--two {
+  right: 14%;
+  width: 108px;
+}
+
+.practice-leaf {
+  position: absolute;
+  bottom: 92px;
+  left: 18%;
+  width: 48px;
+  height: 36px;
+  border: 1px solid rgba(214, 232, 219, 0.42);
+  border-radius: 88% 12% 81% 18%;
+  background: #77ab90;
+  box-shadow: 0 9px 19px rgba(0, 13, 10, 0.34);
+  transform: rotate(-16deg);
+}
+
+.practice-leaf i {
+  position: absolute;
+  top: 7px;
+  left: 5px;
+  width: 40px;
+  height: 1px;
+  background: rgba(30, 77, 59, 0.72);
+  transform: rotate(34deg);
+  transform-origin: left center;
+}
+
+.practice-leaf i::after {
+  position: absolute;
+  right: -11px;
+  width: 14px;
+  height: 1px;
+  background: rgba(167, 203, 184, 0.6);
+  content: "";
+}
+
+.practice-leaf-scene.is-inhaling .practice-leaf {
+  animation: practice-leaf-gather 3100ms ease-in-out forwards;
+}
+
+.practice-leaf-scene.is-exhaling .practice-leaf {
+  animation: practice-leaf-sail 5100ms ease-in-out forwards;
+}
+
+.practice-leaf-scene.is-exhaling .practice-leaf-ripple {
+  animation: practice-leaf-water 2500ms ease-out infinite;
+}
+
+@keyframes practice-leaf-gather {
+  0% {
+    bottom: 92px;
+    left: 18%;
+    transform: rotate(-16deg) scale(0.92);
+  }
+  55% {
+    bottom: 101px;
+    left: 16%;
+    transform: rotate(-23deg) scale(1);
+  }
+  100% {
+    bottom: 96px;
+    left: 18%;
+    transform: rotate(-13deg) scale(1);
+  }
+}
+
+@keyframes practice-leaf-sail {
+  0% {
+    bottom: 96px;
+    left: 18%;
+    transform: rotate(-13deg);
+  }
+  45% {
+    bottom: 123px;
+    left: 46%;
+    transform: rotate(8deg);
+  }
+  100% {
+    bottom: 105px;
+    left: 76%;
+    transform: rotate(22deg);
+  }
+}
+
+@keyframes practice-leaf-water {
+  0% {
+    opacity: 0.18;
+    transform: scale(0.78);
+  }
+  100% {
+    opacity: 0.52;
+    transform: scale(1.18);
+  }
+}
+
+.practice-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.practice-stage:active {
+  transform: none;
+}
+
+.practice-stage__verb {
+  position: absolute;
+  right: 22px;
+  bottom: 17px;
+  min-width: 50px;
+  padding: 4px 9px;
+  border: 1px solid rgba(242, 235, 221, 0.24);
+  border-radius: 8px;
+  color: var(--paper-dim);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.practice-robot-stage {
+  background: #263b4b;
+}
+
+.practice-robot {
+  position: relative;
+  display: block;
+  width: 154px;
+  height: 184px;
+  transform-origin: center bottom;
+  transition: transform 520ms cubic-bezier(0.22, 0.76, 0.3, 1);
+}
+
+.practice-robot__antenna {
+  position: absolute;
+  z-index: 1;
+  top: 5px;
+  left: 75px;
+  width: 4px;
+  height: 24px;
+  border-radius: 2px;
+  background: #89aaaf;
+  transform-origin: bottom;
+  transition: transform 320ms ease-in-out;
+}
+
+.practice-robot__antenna::before {
+  position: absolute;
+  top: -5px;
+  left: -4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #d4bc78;
+  box-shadow: 0 0 14px rgba(212, 188, 120, 0.28);
+  content: "";
+}
+
+.practice-robot__head {
+  position: absolute;
+  z-index: 2;
+  top: 27px;
+  left: 37px;
+  width: 80px;
+  height: 61px;
+  border: 2px solid rgba(224, 234, 230, 0.62);
+  border-radius: 14px 14px 19px 19px;
+  background: #52727e;
+  box-shadow: inset 0 -9px 0 rgba(27, 49, 62, 0.2);
+  transition: transform 360ms ease-in-out;
+}
+
+.practice-robot__head i {
+  position: absolute;
+  top: 22px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 10px rgba(242, 235, 221, 0.24);
+  transition: height 220ms ease-in-out, transform 220ms ease-in-out;
+}
+
+.practice-robot__head i:first-child {
+  left: 18px;
+}
+
+.practice-robot__head i:last-child {
+  right: 18px;
+}
+
+.practice-robot__body {
+  position: absolute;
+  z-index: 1;
+  top: 92px;
+  left: 30px;
+  width: 94px;
+  height: 68px;
+  border: 2px solid rgba(224, 234, 230, 0.44);
+  border-radius: 11px 11px 22px 22px;
+  background: #668b8a;
+  box-shadow: inset 0 -12px 0 rgba(30, 65, 66, 0.22);
+  transition: transform 420ms ease-in-out;
+}
+
+.practice-robot__body b {
+  position: absolute;
+  top: 20px;
+  left: 34px;
+  width: 23px;
+  height: 14px;
+  border: 1px solid rgba(242, 235, 221, 0.48);
+  border-radius: 4px;
+  background: #344e57;
+}
+
+.practice-robot__arm,
+.practice-robot__foot {
+  position: absolute;
+  display: block;
+  background: #89a6a4;
+  transition: transform 420ms ease-in-out;
+}
+
+.practice-robot__arm {
+  z-index: 0;
+  top: 103px;
+  width: 20px;
+  height: 58px;
+  border-radius: 10px 10px 13px 13px;
+  transform-origin: top center;
+}
+
+.practice-robot__arm--left {
+  left: 9px;
+  transform: rotate(8deg);
+}
+
+.practice-robot__arm--right {
+  right: 9px;
+  transform: rotate(-8deg);
+}
+
+.practice-robot__foot {
+  bottom: 0;
+  width: 37px;
+  height: 18px;
+  border-radius: 8px 8px 4px 4px;
+}
+
+.practice-robot__foot--left {
+  left: 35px;
+}
+
+.practice-robot__foot--right {
+  right: 35px;
+}
+
+.practice-robot-stage.is-held .practice-robot {
+  transform: translateY(-3px) scale(0.95);
+}
+
+.practice-robot-stage.is-held .practice-robot__antenna {
+  transform: rotate(-12deg);
+}
+
+.practice-robot-stage.is-held .practice-robot__head i {
+  height: 5px;
+  transform: translateY(3px);
+}
+
+.practice-robot-stage.is-held .practice-robot__arm--left {
+  transform: rotate(-22deg);
+}
+
+.practice-robot-stage.is-held .practice-robot__arm--right {
+  transform: rotate(22deg);
+}
+
+.practice-robot-stage.is-releasing .practice-robot {
+  transform: translateY(9px) rotate(2deg);
+}
+
+.practice-robot-stage.is-releasing .practice-robot__antenna {
+  transform: rotate(18deg);
+}
+
+.practice-robot-stage.is-releasing .practice-robot__head {
+  transform: translateY(4px) rotate(2deg);
+}
+
+.practice-robot-stage.is-releasing .practice-robot__body {
+  transform: scaleY(0.94);
+}
+
+.practice-robot-stage.is-releasing .practice-robot__arm--left,
+.practice-robot-stage.is-releasing .practice-robot__arm--right {
+  transform: rotate(12deg);
+}
+
+.practice-bee-stage {
+  background: #343b35;
+}
+
+.practice-bee-ring {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border: 1px solid rgba(224, 200, 126, 0.46);
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.practice-bee-ring--two {
+  animation-delay: 850ms !important;
+}
+
+.practice-bee-ring--three {
+  animation-delay: 1700ms !important;
+}
+
+.practice-bee {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 128px;
+  height: 102px;
+  transform-origin: center;
+  transition: transform 480ms ease-in-out;
+}
+
+.practice-bee__body {
+  position: absolute;
+  top: 36px;
+  left: 26px;
+  width: 82px;
+  height: 52px;
+  overflow: hidden;
+  border: 2px solid rgba(242, 235, 221, 0.62);
+  border-radius: 52% 46% 49% 54%;
+  background: #dab958;
+  box-shadow: inset 21px 0 0 #544e3e, inset 33px 0 0 #dab958, inset 49px 0 0 #544e3e, inset 60px 0 0 #dab958;
+}
+
+.practice-bee__body::after {
+  position: absolute;
+  top: 20px;
+  right: -9px;
+  width: 14px;
+  height: 8px;
+  border-top: 2px solid rgba(242, 235, 221, 0.58);
+  transform: rotate(16deg);
+  content: "";
+}
+
+.practice-bee__body i {
+  position: absolute;
+  top: 13px;
+  left: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #182a27;
+}
+
+.practice-bee__body i:last-child {
+  top: 29px;
+  left: 7px;
+  width: 10px;
+  height: 5px;
+  border: 1px solid #182a27;
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+  background: transparent;
+}
+
+.practice-bee__wing {
+  position: absolute;
+  z-index: 1;
+  top: 10px;
+  width: 49px;
+  height: 45px;
+  border: 1px solid rgba(220, 231, 225, 0.68);
+  border-radius: 75% 39% 68% 42%;
+  background: rgba(174, 191, 217, 0.14);
+  transform-origin: bottom center;
+}
+
+.practice-bee__wing--left {
+  left: 19px;
+  transform: rotate(-20deg);
+}
+
+.practice-bee__wing--right {
+  right: 15px;
+  transform: rotate(22deg) scaleX(-1);
+}
+
+.practice-bee-stage.is-held .practice-bee {
+  animation: practice-bee-hum 520ms ease-in-out infinite alternate;
+}
+
+.practice-bee-stage.is-held .practice-bee__wing--left {
+  animation: practice-bee-wing-left 190ms ease-in-out infinite alternate;
+}
+
+.practice-bee-stage.is-held .practice-bee__wing--right {
+  animation: practice-bee-wing-right 190ms ease-in-out infinite alternate;
+}
+
+.practice-bee-stage.is-held .practice-bee-ring {
+  animation: practice-bee-wave 2550ms ease-out infinite;
+}
+
+.practice-bee-stage.is-releasing .practice-bee {
+  transform: translateY(10px) rotate(4deg);
+}
+
+@keyframes practice-bee-hum {
+  from {
+    transform: translateY(-2px) rotate(-1deg);
+  }
+  to {
+    transform: translateY(2px) rotate(1deg);
+  }
+}
+
+@keyframes practice-bee-wing-left {
+  from {
+    transform: rotate(-27deg);
+  }
+  to {
+    transform: rotate(-8deg);
+  }
+}
+
+@keyframes practice-bee-wing-right {
+  from {
+    transform: rotate(28deg) scaleX(-1);
+  }
+  to {
+    transform: rotate(9deg) scaleX(-1);
+  }
+}
+
+@keyframes practice-bee-wave {
+  0% {
+    opacity: 0.48;
+    transform: scale(0.66);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+.practice-cue {
+  min-height: 60px;
+  margin: 14px 4px 0;
+  color: var(--paper);
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  font-size: 17px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.practice-privacy {
+  margin: 11px 0 -7px;
+  color: var(--paper-faint);
+  font-size: 11px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.practice-start,
+.practice-controls {
+  margin-top: 5px;
+}
+
+.practice-controls > * + * {
+  margin-top: 9px;
+}
+
+.practice-checkin {
+  padding: 39px 0 7px;
+  text-align: center;
+}
+
+.practice-checkin__mark {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 21px;
+  border: 1px solid rgba(167, 203, 184, 0.52);
+  border-radius: 50%;
+  background: #234139;
+}
+
+.practice-checkin__mark::after {
+  position: absolute;
+  top: 19px;
+  left: 18px;
+  width: 27px;
+  height: 20px;
+  border-radius: 86% 12% 78% 19%;
+  background: #77ab90;
+  content: "";
+  transform: rotate(-14deg);
+}
+
+.practice-checkin__mark--robot {
+  border-radius: 16px;
+  background: #29394c;
+}
+
+.practice-checkin__mark--robot::after {
+  top: 17px;
+  left: 17px;
+  width: 28px;
+  height: 25px;
+  border: 2px solid #aebfd9;
+  border-radius: 7px;
+  background: #52727e;
+  transform: none;
+}
+
+.practice-checkin__mark--bee {
+  background: #3c3c31;
+}
+
+.practice-checkin__mark--bee::after {
+  top: 21px;
+  left: 15px;
+  width: 34px;
+  height: 22px;
+  border: 1px solid #e0c87e;
+  border-radius: 50%;
+  background: #d9b657;
+  box-shadow: inset 9px 0 0 #5a5441, inset 16px 0 0 #d9b657, inset 23px 0 0 #5a5441;
+  transform: none;
+}
+
+.practice-checkin > p {
+  max-width: 390px;
+  margin: 13px auto 25px;
+  color: var(--paper-dim);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.practice-feeling-choices button {
   display: block;
   width: 100%;
-  min-height: 72px;
-  padding: 14px 17px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  min-height: 62px;
+  padding: 12px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 17px;
   background: var(--surface-soft);
-  box-shadow: 0 8px 20px rgba(0, 13, 10, 0.2);
+  box-shadow: 0 7px 17px rgba(0, 13, 10, 0.18);
   color: var(--paper);
   font-family: "Songti SC", "STSong", "SimSun", serif;
   font-size: 18px;
-  text-align: left;
 }
 
-.practice-choices button + button {
+.practice-feeling-choices button + button {
   margin-top: 10px;
 }
 
-.practice-choices button:active,
-.quality-choices button:active {
-  border-color: rgba(167, 203, 184, 0.48);
+.practice-feeling-choices button:active {
+  border-color: rgba(167, 203, 184, 0.56);
   background: var(--mint-soft);
-}
-
-.quality-choices {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.quality-choices button {
-  min-height: 76px;
-  padding: 12px;
-  border: 1px solid var(--line-strong);
-  border-radius: 16px;
-  background: var(--surface-soft);
-  box-shadow: 0 8px 20px rgba(0, 13, 10, 0.2);
-  color: var(--paper);
-  font-family: "Songti SC", "STSong", "SimSun", serif;
-  font-size: 18px;
 }
 
 .practice-exit {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 25px;
+  margin-top: 22px;
 }
 
 .practice-exit button {
@@ -1063,19 +1930,42 @@ textarea:focus {
 }
 
 .practice-result {
-  padding: 35px 0 10px;
+  padding: 48px 0 10px;
   text-align: center;
 }
 
 .practice-result__mark {
+  position: relative;
   display: block;
-  width: 54px;
-  height: 54px;
-  margin: 0 auto 18px;
-  border: 2px solid rgba(119, 171, 144, 0.48);
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 24px;
+  border: 1px solid rgba(119, 171, 144, 0.58);
   border-radius: 50%;
-  background: var(--bluebell-soft);
-  box-shadow: inset 0 0 0 14px rgba(71, 113, 95, 0.72);
+  background: #233d36;
+  box-shadow: inset 0 0 0 13px rgba(119, 171, 144, 0.12);
+}
+
+.practice-result__mark::before,
+.practice-result__mark::after {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--sea-glass);
+  content: "";
+}
+
+.practice-result__mark::before {
+  top: 26px;
+  left: 21px;
+  width: 7px;
+  height: 7px;
+}
+
+.practice-result__mark::after {
+  top: 26px;
+  right: 21px;
+  width: 7px;
+  height: 7px;
 }
 
 .practice-result > p {
@@ -1087,18 +1977,13 @@ textarea:focus {
 }
 
 .practice-result h1 {
-  margin: 3px 0 20px;
-  font-size: 36px;
+  margin: 0 0 19px;
+  font-size: 33px;
+  line-height: 1.5;
 }
 
-.practice-result blockquote {
-  margin: 24px 0 0;
-  padding: 18px;
-  border-left: 2px solid var(--sea-glass);
-  background: linear-gradient(100deg, var(--sage-wash), var(--blue-wash));
-  font-family: "Songti SC", "STSong", "SimSun", serif;
-  font-size: 21px;
-  line-height: 1.65;
+.practice-result__actions {
+  margin-top: 29px;
 }
 
 .reflection-form {
@@ -1883,6 +2768,37 @@ textarea:focus {
 }
 
 @media (max-width: 360px) {
+  .practice-tool {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .practice-mode-card {
+    grid-template-columns: 76px 1fr 20px;
+  }
+
+  .practice-mode-card__art {
+    width: 64px;
+  }
+
+  .practice-mode-card__copy {
+    padding-right: 7px;
+  }
+
+  .practice-mode-card__copy strong {
+    font-size: 18px;
+  }
+
+  .practice-mode-header h1,
+  .practice-checkin h1 {
+    font-size: 31px;
+  }
+
+  .practice-leaf-scene,
+  .practice-stage {
+    height: 228px;
+  }
+
   .game-entry {
     grid-template-columns: 84px minmax(0, 1fr);
   }
@@ -3172,6 +4088,26 @@ canvas {
   .screen-wait--fog .screen-calm__body > * + * {
     margin-top: 4px;
   }
+
+  .practice-mode-header {
+    padding-top: 12px;
+    padding-bottom: 9px;
+  }
+
+  .practice-leaf-scene,
+  .practice-stage {
+    height: 214px;
+  }
+
+  .practice-robot {
+    transform: scale(0.88);
+  }
+
+  .practice-cue {
+    min-height: 51px;
+    margin-top: 9px;
+    font-size: 16px;
+  }
 }
 
 .ground-keyboard-open .app-shell {
@@ -3227,6 +4163,36 @@ canvas {
   .wait-window.is-lit .wait-window__pane {
     animation: none;
     filter: brightness(1.08);
+  }
+
+  .practice-leaf-scene.is-inhaling .practice-leaf {
+    bottom: 101px;
+    left: 18%;
+    animation: none;
+    transform: rotate(-13deg);
+  }
+
+  .practice-leaf-scene.is-exhaling .practice-leaf {
+    bottom: 105px;
+    left: 76%;
+    animation: none;
+    transform: rotate(22deg);
+  }
+
+  .practice-leaf-scene.is-exhaling .practice-leaf-ripple,
+  .practice-bee-stage.is-held .practice-bee,
+  .practice-bee-stage.is-held .practice-bee__wing,
+  .practice-bee-stage.is-held .practice-bee-ring {
+    animation: none;
+  }
+
+  .practice-bee-stage.is-held .practice-bee {
+    transform: translateY(-2px);
+  }
+
+  .practice-bee-stage.is-held .practice-bee-ring {
+    opacity: 0.42;
+    transform: scale(1.35);
   }
 
   .touch-echo {

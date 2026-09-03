@@ -11,6 +11,11 @@
   var breathingTouchTimer = null;
   var activeBreathingControl = null;
   var suppressBreathingClick = false;
+  var practicePhaseTimer = null;
+  var practiceHoldTimer = null;
+  var practiceSettleTimer = null;
+  var activePracticeControl = null;
+  var suppressPracticeClick = false;
   var groundingAnimationTimer = null;
   var waitTimer = null;
   var waitActivityTimer = null;
@@ -60,21 +65,21 @@
     "那又怎样？我听见了，先让它坐会儿。",
   ];
 
-  var PRACTICE_OPTIONS = {
-    feet: {
-      label: "脚底碰着地面",
-      prompt: "脚底和地面接触时，最像下面哪一个？",
-      qualities: ["硬", "软", "有压力", "说不清"],
+  var PRACTICE_MODES = {
+    leaf: {
+      label: "吹一片叶子",
+      tag: "呼气",
+      summary: "让呼气送叶子走一小段",
     },
-    hands: {
-      label: "手心的温度",
-      prompt: "手心现在最像下面哪一个？",
-      qualities: ["有点凉", "有点暖", "微微潮", "说不清"],
+    robot: {
+      label: "机器人下班",
+      tag: "松开",
+      summary: "握紧一点，再把力气交回去",
     },
-    sound: {
-      label: "远处一个声音",
-      prompt: "那个声音现在最像下面哪一个？",
-      qualities: ["持续着", "一阵一阵", "很远", "说不清"],
+    bee: {
+      label: "小蜜蜂试音",
+      tag: "轻哼",
+      summary: "有声音就哼，没声音也能玩",
     },
   };
 
@@ -236,9 +241,11 @@
     triviaOrigin: "random",
     learnNote: "second-fear",
     learnLayer: "",
-    practiceStep: 0,
-    practiceFocus: "",
-    practiceQuality: "",
+    practiceMode: "",
+    practiceStage: "choose",
+    practiceMotion: "idle",
+    practiceRound: 0,
+    practiceFeeling: "",
     reflection: {
       fear: "",
       meaning: "",
@@ -461,7 +468,30 @@
     });
   }
 
+  function clearPracticeRuntime() {
+    if (activePracticeControl) {
+      activePracticeControl.classList.remove("is-held");
+      activePracticeControl.classList.remove("is-releasing");
+      activePracticeControl.setAttribute("aria-pressed", "false");
+    }
+    activePracticeControl = null;
+    suppressPracticeClick = false;
+    if (practicePhaseTimer) {
+      window.clearTimeout(practicePhaseTimer);
+      practicePhaseTimer = null;
+    }
+    if (practiceHoldTimer) {
+      window.clearTimeout(practiceHoldTimer);
+      practiceHoldTimer = null;
+    }
+    if (practiceSettleTimer) {
+      window.clearTimeout(practiceSettleTimer);
+      practiceSettleTimer = null;
+    }
+  }
+
   function clearRuntimeTimers() {
+    clearPracticeRuntime();
     if (activeBreathingControl) {
       activeBreathingControl.classList.remove("is-held");
       activeBreathingControl.classList.remove("is-releasing");
@@ -614,7 +644,7 @@
       "</button>",
       '<button class="calm-entry" type="button" data-action="open-practice">',
       '<span class="calm-entry__mark">练习</span>',
-      '<span class="calm-entry__text"><strong>平时练一小步</strong><small>练习看见感觉，不急着处理</small></span>',
+      '<span class="calm-entry__text"><strong>平时练一小步</strong><small>让叶子、机器人和小蜜蜂换个节奏</small></span>',
       '<span class="calm-entry__arrow" aria-hidden="true">打开&nbsp;→</span>',
       "</button>",
       '<button class="calm-entry" type="button" data-action="prepare">',
@@ -845,62 +875,212 @@
     );
   }
 
-  function practiceOption() {
-    return PRACTICE_OPTIONS[state.practiceFocus] || PRACTICE_OPTIONS.feet;
+  function practiceModeCard(mode) {
+    var option = PRACTICE_MODES[mode];
+    var art = mode === "leaf"
+      ? '<span class="practice-mini-leaf"><i></i></span>'
+      : mode === "robot"
+        ? '<span class="practice-mini-robot"><i></i><b></b></span>'
+        : '<span class="practice-mini-bee"><i></i><b></b></span>';
+    return [
+      '<button class="practice-mode-card" type="button" data-action="practice-select" data-practice="', mode, '">',
+      '<span class="practice-mode-card__art practice-mode-card__art--', mode, '" aria-hidden="true">', art, "</span>",
+      '<span class="practice-mode-card__copy">',
+      '<span class="practice-mode-card__tag">', escapeHtml(option.tag), "</span>",
+      '<strong>', escapeHtml(option.label), "</strong>",
+      '<small>', escapeHtml(option.summary), "</small>",
+      "</span>",
+      '<span class="practice-mode-card__arrow" aria-hidden="true">→</span>',
+      "</button>",
+    ].join("");
+  }
+
+  function practiceExit() {
+    return [
+      '<div class="practice-exit">',
+      '<button class="quiet-link" type="button" data-action="practice-emergency">现在开始难受了&nbsp;→</button>',
+      '<span>只在状态平稳时练；明显不适就停。</span>',
+      "</div>",
+    ].join("");
+  }
+
+  function renderPracticeChooser() {
+    return [
+      innerPageNav("calm", "回到平时", "状态好时"),
+      '<header class="calm-tool__intro practice-menu__intro">',
+      '<span class="eyebrow">平时练一小步</span>',
+      '<h1>让身体<br>换个节奏。</h1>',
+      '<p>叶子、机器人和小蜜蜂，各会一种慢下来的办法。没有必须放松的任务。</p>',
+      "</header>",
+      '<div class="practice-menu" aria-label="选择一个身体练习">',
+      practiceModeCard("leaf"),
+      practiceModeCard("robot"),
+      practiceModeCard("bee"),
+      "</div>",
+      '<aside class="practice-safety"><strong>轻、浅、舒服就好。</strong><span>不要刻意吸深或憋气；头晕、发麻或胸闷加重就停。</span></aside>',
+      practiceExit(),
+    ].join("");
+  }
+
+  function renderLeafPractice() {
+    var isSetup = state.practiceStage === "setup";
+    var sceneClass = state.practiceMotion === "inhale"
+      ? " is-inhaling"
+      : state.practiceMotion === "exhale" ? " is-exhaling" : "";
+    return [
+      innerPageNav("practice-home", "换一个", "平时练一小步 · 呼气"),
+      '<header class="practice-mode-header">',
+      '<h1>吹一片叶子</h1>',
+      '<p id="practice-instruction">自然吸一小口，叶子靠近；舒服地呼出去，它就往前走。跟不上也不用追。</p>',
+      "</header>",
+      '<div class="practice-leaf-scene', sceneClass, '" id="practice-leaf-scene" aria-hidden="true">',
+      '<span class="practice-leaf-moon"></span>',
+      '<span class="practice-leaf-star practice-leaf-star--one"></span>',
+      '<span class="practice-leaf-star practice-leaf-star--two"></span>',
+      '<span class="practice-leaf-ripple practice-leaf-ripple--one"></span>',
+      '<span class="practice-leaf-ripple practice-leaf-ripple--two"></span>',
+      '<span class="practice-leaf"><i></i></span>',
+      "</div>",
+      '<p class="practice-cue" id="practice-cue" role="status" aria-live="polite" aria-atomic="true">',
+      isSetup ? "叶子没在考勤。准备好，再让它出发。" : "自然吸一小口。不用吸满。",
+      "</p>",
+      isSetup
+        ? '<button class="primary-button practice-start" type="button" data-action="practice-start">让叶子出发</button>'
+        : [
+          '<div class="practice-controls">',
+          '<button class="primary-button" type="button" data-action="practice-finish">到这里就好</button>',
+          '<button class="secondary-button" type="button" data-action="practice-home">换一个</button>',
+          "</div>",
+        ].join(""),
+      practiceExit(),
+    ].join("");
+  }
+
+  function renderRobotPractice() {
+    return [
+      innerPageNav("practice-home", "换一个", "平时练一小步 · 松开"),
+      '<header class="practice-mode-header">',
+      '<h1>机器人下班</h1>',
+      '<p id="practice-instruction">按住机器人时，手掌轻轻握紧；松手时，手和机器人一起下班。只用一点力。</p>',
+      "</header>",
+      '<button class="practice-stage practice-robot-stage" type="button" data-action="practice-hold" data-practice-hold="robot" aria-pressed="false" aria-describedby="practice-instruction practice-cue">',
+      '<span class="practice-robot" aria-hidden="true">',
+      '<span class="practice-robot__antenna"></span>',
+      '<span class="practice-robot__head"><i></i><i></i></span>',
+      '<span class="practice-robot__body"><b></b></span>',
+      '<span class="practice-robot__arm practice-robot__arm--left"></span>',
+      '<span class="practice-robot__arm practice-robot__arm--right"></span>',
+      '<span class="practice-robot__foot practice-robot__foot--left"></span>',
+      '<span class="practice-robot__foot practice-robot__foot--right"></span>',
+      "</span>",
+      '<span class="practice-stage__verb">按住</span>',
+      "</button>",
+      '<p class="practice-cue" id="practice-cue" role="status" aria-live="polite" aria-atomic="true">按住它，手掌轻轻握一下。</p>',
+      '<div class="practice-controls">',
+      '<button class="primary-button" type="button" data-action="practice-finish">到这里就好</button>',
+      '<button class="secondary-button" type="button" data-action="practice-home">换一个</button>',
+      "</div>",
+      practiceExit(),
+    ].join("");
+  }
+
+  function renderBeePractice() {
+    return [
+      innerPageNav("practice-home", "换一个", "平时练一小步 · 轻哼"),
+      '<header class="practice-mode-header">',
+      '<h1>小蜜蜂试音</h1>',
+      '<p id="practice-instruction">按住小蜜蜂，舒服地哼一声“嗯——”；气到哪里就松手。不方便出声，就安静呼气。</p>',
+      "</header>",
+      '<button class="practice-stage practice-bee-stage" type="button" data-action="practice-hold" data-practice-hold="bee" aria-pressed="false" aria-describedby="practice-instruction practice-privacy practice-cue">',
+      '<span class="practice-bee-ring practice-bee-ring--one" aria-hidden="true"></span>',
+      '<span class="practice-bee-ring practice-bee-ring--two" aria-hidden="true"></span>',
+      '<span class="practice-bee-ring practice-bee-ring--three" aria-hidden="true"></span>',
+      '<span class="practice-bee" aria-hidden="true">',
+      '<span class="practice-bee__wing practice-bee__wing--left"></span>',
+      '<span class="practice-bee__wing practice-bee__wing--right"></span>',
+      '<span class="practice-bee__body"><i></i><i></i></span>',
+      '<span class="practice-bee__eye"></span>',
+      "</span>",
+      '<span class="practice-stage__verb">按住</span>',
+      "</button>",
+      '<p class="practice-privacy" id="practice-privacy">它不听麦克风，只负责把波纹画出来。</p>',
+      '<p class="practice-cue" id="practice-cue" role="status" aria-live="polite" aria-atomic="true">按住小蜜蜂，声音小一点也完全够用。</p>',
+      '<div class="practice-controls">',
+      '<button class="primary-button" type="button" data-action="practice-finish">到这里就好</button>',
+      '<button class="secondary-button" type="button" data-action="practice-home">换一个</button>',
+      "</div>",
+      practiceExit(),
+    ].join("");
+  }
+
+  function renderPracticeCheckin() {
+    return [
+      innerPageNav("practice-home", "换一个", "刚才"),
+      '<section class="practice-checkin" aria-labelledby="practice-checkin-title">',
+      '<span class="practice-checkin__mark practice-checkin__mark--', escapeHtml(state.practiceMode || "leaf"), '" aria-hidden="true"></span>',
+      '<h1 id="practice-checkin-title" tabindex="-1">身体现在<br>更像哪一种？</h1>',
+      '<p>不用找进步，只说此刻。这个选择不会被保存。</p>',
+      '<div class="practice-feeling-choices">',
+      '<button type="button" data-action="practice-feeling" data-feeling="softer">松一点</button>',
+      '<button type="button" data-action="practice-feeling" data-feeling="same">差不多</button>',
+      '<button type="button" data-action="practice-feeling" data-feeling="uncomfortable">不太舒服</button>',
+      "</div>",
+      "</section>",
+      practiceExit(),
+    ].join("");
+  }
+
+  function practiceResultCopy() {
+    if (state.practiceFeeling === "softer") {
+      return {
+        title: "好，先不追。",
+        body: "有一点变化就够。别追着检查，让这一点自己待着。",
+      };
+    }
+    if (state.practiceFeeling === "uncomfortable") {
+      return {
+        title: "收到，身体投了反对票。",
+        body: "那就停在这里。身体不喜欢这套，很有发言权；下次换一个，或直接玩不管呼吸的小游戏。",
+      };
+    }
+    return {
+      title: "没变化，也不交作业。",
+      body: "身体只是试过另一种节奏，不欠我们一个结果。",
+    };
+  }
+
+  function renderPracticeResult() {
+    var copy = practiceResultCopy();
+    return [
+      innerPageNav("calm", "回到平时", "练到这里"),
+      '<section class="practice-result">',
+      '<span class="practice-result__mark practice-result__mark--', escapeHtml(state.practiceMode || "leaf"), '" aria-hidden="true"></span>',
+      '<h1 tabindex="-1" id="practice-result-title">', escapeHtml(copy.title), "</h1>",
+      '<p>', escapeHtml(copy.body), "</p>",
+      "</section>",
+      '<div class="calm-tool__actions practice-result__actions">',
+      '<button class="primary-button" type="button" data-action="practice-home">换一个练习</button>',
+      '<button class="secondary-button" type="button" data-action="calm">回到平时</button>',
+      "</div>",
+    ].join("");
   }
 
   function renderPractice() {
     var content = "";
-    if (state.practiceStep === 0) {
-      content = [
-        '<header class="calm-tool__intro">',
-        '<span class="eyebrow">平时练一小步</span>',
-        '<h1>先看见它。<br>让处理慢一步。</h1>',
-        '<p>选一样此刻很轻、很普通的感觉。只看看它是什么样，随时可以停。</p>',
-        "</header>",
-        '<div class="practice-choices">',
-        '<button type="button" data-action="practice-focus" data-focus="feet">脚底碰着地面</button>',
-        '<button type="button" data-action="practice-focus" data-focus="hands">手心的温度</button>',
-        '<button type="button" data-action="practice-focus" data-focus="sound">远处一个声音</button>',
-        "</div>",
-      ].join("");
-    } else if (state.practiceStep === 1) {
-      var option = practiceOption();
-      var qualities = option.qualities.map(function (quality) {
-        return '<button type="button" data-action="practice-quality" data-quality="' + escapeHtml(quality) + '">' + escapeHtml(quality) + "</button>";
-      }).join("");
-      content = [
-        '<header class="calm-tool__intro">',
-        '<span class="eyebrow">只说能确认的事实</span>',
-        '<h1>', escapeHtml(option.label), "</h1>",
-        '<p>', escapeHtml(option.prompt), "</p>",
-        "</header>",
-        '<div class="quality-choices">', qualities, "</div>",
-      ].join("");
+    if (state.practiceStage === "choose") {
+      content = renderPracticeChooser();
+    } else if (state.practiceStage === "checkin") {
+      content = renderPracticeCheckin();
+    } else if (state.practiceStage === "result") {
+      content = renderPracticeResult();
+    } else if (state.practiceMode === "leaf") {
+      content = renderLeafPractice();
+    } else if (state.practiceMode === "robot") {
+      content = renderRobotPractice();
     } else {
-      content = [
-        '<div class="practice-result">',
-        '<span class="practice-result__mark" aria-hidden="true"></span>',
-        '<p>你刚才注意到</p>',
-        '<h1>“', escapeHtml(state.practiceQuality), '”</h1>',
-        '<p>你刚才让这个感觉保持原样，多看了它一会儿。这一小步练的是：感觉出现了，处理它的动作可以慢一点。</p>',
-        '<blockquote>那又怎样？<br>它先待着，我继续。</blockquote>',
-        "</div>",
-        '<div class="calm-tool__actions">',
-        '<button class="primary-button" type="button" data-action="practice-restart">再练一个</button>',
-        '<button class="secondary-button" type="button" data-action="calm">练到这里就好</button>',
-        "</div>",
-      ].join("");
+      content = renderBeePractice();
     }
-    return [
-      '<section class="screen screen-scroll calm-tool">',
-      innerPageNav("calm", "回到平时", "不用做对"),
-      content,
-      state.practiceStep < 2
-        ? '<div class="practice-exit"><button class="quiet-link" type="button" data-action="practice-emergency">现在开始难受了&nbsp;→</button><span>只在状态平稳时练；明显不适就停。</span></div>'
-        : "",
-      "</section>",
-    ].join("");
+    return '<section class="screen screen-scroll calm-tool practice-tool">' + content + "</section>";
   }
 
   function reflectionItem(label, value) {
@@ -2563,7 +2743,148 @@
     }, 1000);
   }
 
+  function updatePracticeCue(message) {
+    var cue = document.getElementById("practice-cue");
+    if (cue) cue.textContent = message;
+  }
+
+  function applyLeafMotion(motion) {
+    state.practiceMotion = motion;
+    var scene = document.getElementById("practice-leaf-scene");
+    if (scene) {
+      scene.classList.toggle("is-inhaling", motion === "inhale");
+      scene.classList.toggle("is-exhaling", motion === "exhale");
+    }
+    if (motion === "inhale") {
+      updatePracticeCue("自然吸一小口。不用吸满。");
+    } else if (motion === "exhale") {
+      updatePracticeCue("轻轻呼出去。让叶子替你赶路。");
+    }
+  }
+
+  function beginLeafInhale() {
+    if (state.route !== "practice" || state.practiceMode !== "leaf" || state.practiceStage !== "active") return;
+    applyLeafMotion("inhale");
+    practicePhaseTimer = window.setTimeout(function () {
+      practicePhaseTimer = null;
+      beginLeafExhale();
+    }, 3100);
+  }
+
+  function beginLeafExhale() {
+    if (state.route !== "practice" || state.practiceMode !== "leaf" || state.practiceStage !== "active") return;
+    applyLeafMotion("exhale");
+    practicePhaseTimer = window.setTimeout(function () {
+      practicePhaseTimer = null;
+      state.practiceRound += 1;
+      if (state.practiceRound >= 4) {
+        finishPractice();
+      } else {
+        beginLeafInhale();
+      }
+    }, 5100);
+  }
+
+  function startLeafPractice() {
+    clearPracticeRuntime();
+    state.practiceMode = "leaf";
+    state.practiceStage = "active";
+    state.practiceMotion = "idle";
+    state.practiceRound = 0;
+    render();
+    beginLeafInhale();
+  }
+
+  function finishPractice() {
+    if (state.route !== "practice" || state.practiceStage === "choose" || state.practiceStage === "result") return;
+    clearPracticeRuntime();
+    state.practiceStage = "checkin";
+    state.practiceMotion = "idle";
+    render();
+    window.requestAnimationFrame(function () {
+      var heading = document.getElementById("practice-checkin-title");
+      if (heading) heading.focus();
+    });
+  }
+
+  function choosePracticeFeeling(feeling) {
+    if (["softer", "same", "uncomfortable"].indexOf(feeling) < 0) feeling = "same";
+    state.practiceFeeling = feeling;
+    state.practiceStage = "result";
+    render();
+    window.requestAnimationFrame(function () {
+      var heading = document.getElementById("practice-result-title");
+      if (heading) heading.focus();
+    });
+  }
+
+  function practiceHoldCue(mode, phase) {
+    if (mode === "robot") {
+      if (phase === "hold") return "一点力就够。机器人不拿加班奖。";
+      if (phase === "release") return "松开。手指、手掌、肩膀，都不用继续值班。";
+      return "要是还想，再请它上一小会儿班。";
+    }
+    if (phase === "hold") return "让声音或呼气，慢慢走到尾巴。";
+    if (phase === "release") return "换回平常呼吸。小蜜蜂自己会降落。";
+    return "想再试一次，就轻轻按住它。";
+  }
+
+  function beginPracticeHold(control, fromKeyboard) {
+    var mode = control ? control.getAttribute("data-practice-hold") : "";
+    if (state.route !== "practice" || state.practiceStage !== "active" || mode !== state.practiceMode) return;
+    if (activePracticeControl) return;
+    if (practiceSettleTimer) {
+      window.clearTimeout(practiceSettleTimer);
+      practiceSettleTimer = null;
+    }
+    control.classList.remove("is-releasing");
+    control.classList.add("is-held");
+    control.setAttribute("aria-pressed", "true");
+    activePracticeControl = control;
+    suppressPracticeClick = !fromKeyboard;
+    state.practiceMotion = "hold";
+    updatePracticeCue(practiceHoldCue(mode, "hold"));
+    practiceHoldTimer = window.setTimeout(function () {
+      practiceHoldTimer = null;
+      endPracticeHold();
+    }, fromKeyboard ? (mode === "robot" ? 1400 : 3200) : (mode === "robot" ? 2600 : 6000));
+  }
+
+  function endPracticeHold() {
+    if (!activePracticeControl) return;
+    var control = activePracticeControl;
+    var mode = control.getAttribute("data-practice-hold") || state.practiceMode;
+    if (practiceHoldTimer) {
+      window.clearTimeout(practiceHoldTimer);
+      practiceHoldTimer = null;
+    }
+    control.classList.remove("is-held");
+    control.classList.add("is-releasing");
+    control.setAttribute("aria-pressed", "false");
+    activePracticeControl = null;
+    state.practiceRound += 1;
+    state.practiceMotion = "releasing";
+    updatePracticeCue(practiceHoldCue(mode, "release"));
+    window.setTimeout(function () {
+      suppressPracticeClick = false;
+    }, 0);
+    practiceSettleTimer = window.setTimeout(function () {
+      practiceSettleTimer = null;
+      if (state.route !== "practice" || state.practiceStage !== "active" || state.practiceMode !== mode) return;
+      control.classList.remove("is-releasing");
+      state.practiceMotion = "idle";
+      updatePracticeCue(practiceHoldCue(mode, "ready"));
+    }, 1100);
+  }
+
   function handleInteractionStart(event) {
+    var practiceControl = event.target && event.target.closest
+      ? event.target.closest('[data-action="practice-hold"]')
+      : null;
+    if (practiceControl && !(event.pointerType === "mouse" && event.button !== 0)) {
+      if (event.cancelable) event.preventDefault();
+      beginPracticeHold(practiceControl, false);
+    }
     var breathControl = event.target && event.target.closest
       ? event.target.closest('[data-action="breath-touch"]')
       : null;
@@ -2582,9 +2903,12 @@
   }
 
   function resetPractice() {
-    state.practiceStep = 0;
-    state.practiceFocus = "";
-    state.practiceQuality = "";
+    clearPracticeRuntime();
+    state.practiceMode = "";
+    state.practiceStage = "choose";
+    state.practiceMotion = "idle";
+    state.practiceRound = 0;
+    state.practiceFeeling = "";
   }
 
   function emptyReflection() {
@@ -2696,15 +3020,27 @@
     } else if (action === "open-practice") {
       resetPractice();
       navigate("practice");
-    } else if (action === "practice-focus") {
-      state.practiceFocus = control.getAttribute("data-focus") || "feet";
-      state.practiceStep = 1;
+    } else if (action === "practice-select") {
+      clearPracticeRuntime();
+      state.practiceMode = control.getAttribute("data-practice") || "leaf";
+      state.practiceStage = state.practiceMode === "leaf" ? "setup" : "active";
+      state.practiceMotion = "idle";
+      state.practiceRound = 0;
+      state.practiceFeeling = "";
       render();
-    } else if (action === "practice-quality") {
-      state.practiceQuality = control.getAttribute("data-quality") || "说不清";
-      state.practiceStep = 2;
-      render();
-    } else if (action === "practice-restart") {
+    } else if (action === "practice-start") {
+      startLeafPractice();
+    } else if (action === "practice-hold") {
+      if (event.detail > 0 || suppressPracticeClick) {
+        suppressPracticeClick = false;
+        return;
+      }
+      beginPracticeHold(control, true);
+    } else if (action === "practice-finish") {
+      finishPractice();
+    } else if (action === "practice-feeling") {
+      choosePracticeFeeling(control.getAttribute("data-feeling") || "same");
+    } else if (action === "practice-home") {
       resetPractice();
       render();
     } else if (action === "practice-emergency") {
@@ -2889,21 +3225,29 @@
   app.addEventListener(interactionMoveEvent, handleInteractionMove);
   document.addEventListener(interactionEndEvent, function () {
     endBreathHold();
+    endPracticeHold();
     endWaitFog();
   });
   if (window.PointerEvent) document.addEventListener("pointercancel", function () {
     endBreathHold();
+    endPracticeHold();
     endWaitFog();
   });
   document.addEventListener(interactionStartEvent, addTouchEcho);
 
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) {
+      if (state.route === "practice" && state.practiceStage === "active") {
+        state.practiceMotion = "idle";
+        if (state.practiceMode === "leaf") state.practiceStage = "setup";
+      }
       clearRuntimeTimers();
     } else if (state.route === "breathe") {
       startBreathingGuide();
     } else if (state.route === "wait") {
       startWaitClock();
+    } else if (state.route === "practice") {
+      render();
     }
   });
 
@@ -2924,6 +3268,15 @@
     getFogRevealRatio: function () { return Object.keys(fogVisited).length / (FOG_GRID_COLUMNS * FOG_GRID_ROWS); },
     getTriviaCount: function () { return TRIVIA_QUESTIONS.length; },
     getTriviaSeenIds: function () { return state.triviaSeenIds.slice(); },
+    getPracticeState: function () {
+      return {
+        mode: state.practiceMode,
+        stage: state.practiceStage,
+        motion: state.practiceMotion,
+        round: state.practiceRound,
+        feeling: state.practiceFeeling,
+      };
+    },
     getTriviaQuestion: function () {
       var question = triviaQuestionById(state.triviaQuestionId);
       if (!question) return null;
