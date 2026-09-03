@@ -22,6 +22,11 @@
 
 项目中的健康信息来源见 [SOURCES.md](./SOURCES.md)。
 
+## 设计文档
+
+- [等待页与小游戏设计方案](./docs/WAITING_GAMES_DESIGN.md)
+- [冷知识题库（100 题）](./docs/TRIVIA_QUESTION_BANK.md)
+
 ## 本地运行
 
 ```bash
