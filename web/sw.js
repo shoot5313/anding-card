@@ -4,6 +4,7 @@ var CORE_FILES = [
   "./index.html",
   "./styles.css",
   "./web.css",
+  "./src/trivia.js",
   "./src/app.js",
   "./web.js",
   "./manifest.webmanifest",

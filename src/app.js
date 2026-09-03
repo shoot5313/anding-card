@@ -3,6 +3,7 @@
 
   var app = document.getElementById("app");
   var STORAGE_KEY = "anding-card-draft-v1";
+  var TRIVIA_STORAGE_KEY = "anding-card-trivia-seen-v1";
   var CARD_WIDTH = 1080;
   var CARD_HEIGHT = 1920;
   var transitionTimer = null;
@@ -172,6 +173,12 @@
   var FOG_BRUSH_RADIUS = 30;
   var FOG_GRID_COLUMNS = 18;
   var FOG_GRID_ROWS = 10;
+  var TRIVIA_QUESTIONS = Array.isArray(window.ANDING_TRIVIA) ? window.ANDING_TRIVIA : [];
+  var TRIVIA_CATEGORIES = [
+    { id: "nature", label: "自然", count: 34 },
+    { id: "animal", label: "动物", count: 33 },
+    { id: "art", label: "文化艺术", count: 33 },
+  ];
 
   function randomWaitWindowTarget(exclude) {
     var choices = [0, 1, 2, 3].filter(function (index) {
@@ -220,6 +227,13 @@
     waitWindowShowIndex: -1,
     waitWindowRound: 0,
     waitFogSeed: randomFogSeed(),
+    gamesReturnRoute: "checkin",
+    triviaSeenIds: loadTriviaSeenIds(),
+    triviaRecentIds: [],
+    triviaCategory: "nature",
+    triviaQuestionId: "",
+    triviaSelectedIndex: -1,
+    triviaOrigin: "random",
     learnNote: "second-fear",
     learnLayer: "",
     practiceStep: 0,
@@ -348,6 +362,96 @@
         return;
       }
     }, 240);
+  }
+
+  function triviaQuestionById(id) {
+    for (var index = 0; index < TRIVIA_QUESTIONS.length; index += 1) {
+      if (TRIVIA_QUESTIONS[index].id === id) return TRIVIA_QUESTIONS[index];
+    }
+    return null;
+  }
+
+  function loadTriviaSeenIds() {
+    try {
+      var saved = JSON.parse(window.localStorage.getItem(TRIVIA_STORAGE_KEY) || "[]");
+      if (!Array.isArray(saved)) return [];
+      var found = {};
+      return saved.filter(function (id) {
+        if (typeof id !== "string" || found[id] || !triviaQuestionById(id)) return false;
+        found[id] = true;
+        return true;
+      });
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function persistTriviaSeenIds() {
+    try {
+      window.localStorage.setItem(TRIVIA_STORAGE_KEY, JSON.stringify(state.triviaSeenIds));
+    } catch (error) {
+      return;
+    }
+  }
+
+  function hasSeenTrivia(id) {
+    return state.triviaSeenIds.indexOf(id) >= 0;
+  }
+
+  function triviaQuestionsForCategory(category) {
+    return TRIVIA_QUESTIONS.filter(function (question) {
+      return !category || question.category === category;
+    });
+  }
+
+  function rememberRecentTrivia(id) {
+    state.triviaRecentIds = state.triviaRecentIds.filter(function (recentId) {
+      return recentId !== id;
+    });
+    state.triviaRecentIds.push(id);
+    if (state.triviaRecentIds.length > 10) state.triviaRecentIds.shift();
+  }
+
+  function openTriviaQuestion(question, origin) {
+    if (!question) return;
+    state.triviaQuestionId = question.id;
+    state.triviaSelectedIndex = -1;
+    state.triviaOrigin = origin || "random";
+    state.triviaCategory = question.category;
+    rememberRecentTrivia(question.id);
+    navigate("trivia-question");
+  }
+
+  function openRandomTrivia(category) {
+    var questions = triviaQuestionsForCategory(category || "");
+    var unseen = questions.filter(function (question) {
+      return !hasSeenTrivia(question.id);
+    });
+    var candidates = unseen;
+    if (!candidates.length) {
+      candidates = questions.filter(function (question) {
+        return state.triviaRecentIds.indexOf(question.id) < 0;
+      });
+    }
+    if (!candidates.length) candidates = questions;
+    if (!candidates.length) return;
+    var question = candidates[Math.floor(Math.random() * candidates.length)];
+    openTriviaQuestion(question, category ? "drawer" : "random");
+  }
+
+  function revealTriviaAnswer(index) {
+    var question = triviaQuestionById(state.triviaQuestionId);
+    if (!question || state.triviaSelectedIndex >= 0 || index < 0 || index > 2) return;
+    state.triviaSelectedIndex = index;
+    if (!hasSeenTrivia(question.id)) {
+      state.triviaSeenIds.push(question.id);
+      persistTriviaSeenIds();
+    }
+    render();
+    window.requestAnimationFrame(function () {
+      var note = document.getElementById("trivia-answer-note");
+      if (note) note.focus();
+    });
   }
 
   function escapeHtml(value) {
@@ -860,7 +964,7 @@
       '<button class="choice-button" type="button" data-action="choose-need" data-need="control"><span>怕会失控</span><small>怕自己撑不住</small></button>',
       "</div>",
       '<div class="choice-shortcuts">',
-      '<button class="choice-shortcut choice-shortcut--game" type="button" data-action="start-game"><strong>直接玩小游戏</strong><small>亮窗记忆 / 擦开图景</small></button>',
+      '<button class="choice-shortcut choice-shortcut--game" type="button" data-action="start-game"><strong>直接玩小游戏</strong><small>亮窗记忆 / 擦开图景 / 冷知识问答</small></button>',
       '<button class="choice-shortcut" type="button" data-action="choose-need" data-need="unclear"><strong>说不清</strong><small>直接陪我</small></button>',
       "</div>",
       "</div>",
@@ -1129,6 +1233,152 @@
       .replace("screen screen-calm", "screen screen-calm screen-wait screen-wait--" + state.waitActivity);
   }
 
+  function triviaCategoryMeta(category) {
+    for (var index = 0; index < TRIVIA_CATEGORIES.length; index += 1) {
+      if (TRIVIA_CATEGORIES[index].id === category) return TRIVIA_CATEGORIES[index];
+    }
+    return TRIVIA_CATEGORIES[0];
+  }
+
+  function renderGames() {
+    return [
+      '<section class="screen screen-scroll game-room">',
+      innerPageNav("games-back", "回到刚才", "小游戏"),
+      '<header class="game-room__intro">',
+      '<span class="game-room__kicker">让注意力换个座位</span>',
+      '<h1>想让哪一小块<br>先忙起来？</h1>',
+      '<p>不用赢，也不用玩完。挑一件眼前的小事就好。</p>',
+      "</header>",
+      '<div class="game-shelf" aria-label="选择小游戏">',
+      '<button class="game-entry game-entry--trivia" type="button" data-action="play-trivia">',
+      '<span class="game-entry__number">100 个小抽屉</span>',
+      '<span class="game-entry__copy"><strong>冷知识问答</strong><small>自然、动物和文化艺术，随手猜一题</small></span>',
+      '<span class="game-entry__arrow" aria-hidden="true">抽一张&nbsp;→</span>',
+      "</button>",
+      '<button class="game-entry" type="button" data-action="play-windows">',
+      '<span class="game-entry__number">眼睛忙一点</span>',
+      '<span class="game-entry__copy"><strong>亮窗记忆</strong><small>看几扇窗亮起，再照着点回来</small></span>',
+      '<span class="game-entry__arrow" aria-hidden="true">开始&nbsp;→</span>',
+      "</button>",
+      '<button class="game-entry" type="button" data-action="play-fog">',
+      '<span class="game-entry__number">手指忙一点</span>',
+      '<span class="game-entry__copy"><strong>擦开图景</strong><small>慢慢擦掉雾，看看下面藏了什么</small></span>',
+      '<span class="game-entry__arrow" aria-hidden="true">开始&nbsp;→</span>',
+      "</button>",
+      "</div>",
+      '<p class="game-room__note">三个都不会计时、计分或留下输赢。</p>',
+      "</section>",
+    ].join("");
+  }
+
+  function renderTriviaHome() {
+    return [
+      '<section class="screen screen-scroll trivia-page trivia-home">',
+      innerPageNav("games", "换个玩法", "冷知识问答"),
+      '<header class="trivia-home__intro">',
+      '<span class="trivia-home__kicker">让好奇心忙一会儿</span>',
+      '<h1>从小抽屉里，<br>拿一件没什么急用的事。</h1>',
+      '<p>每题三个选项。随便猜，点下去就能看到答案和来龙去脉。</p>',
+      "</header>",
+      '<div class="trivia-cabinet-preview" aria-hidden="true">',
+      '<span>自然</span><span>动物</span><span>文化艺术</span>',
+      '<i></i><i></i><i></i><i></i><i></i>',
+      "</div>",
+      '<div class="trivia-home__actions">',
+      '<button class="primary-button trivia-random" type="button" data-action="trivia-random">随手抽一题</button>',
+      '<button class="secondary-button" type="button" data-action="trivia-drawers">自己挑一个</button>',
+      "</div>",
+      '<p class="trivia-home__note">随机抽题会先避开你已经看过答案的那些。</p>',
+      "</section>",
+    ].join("");
+  }
+
+  function renderTriviaDrawers() {
+    var meta = triviaCategoryMeta(state.triviaCategory);
+    var tabs = TRIVIA_CATEGORIES.map(function (category) {
+      var selected = category.id === meta.id;
+      return [
+        '<button class="trivia-category', selected ? " is-selected" : "", '" type="button" data-action="trivia-category" data-category="',
+        escapeHtml(category.id), '" aria-pressed="', selected ? "true" : "false", '">',
+        '<strong>', escapeHtml(category.label), "</strong><small>", String(category.count), " 格</small></button>",
+      ].join("");
+    }).join("");
+    var drawers = triviaQuestionsForCategory(meta.id).map(function (question) {
+      var seen = hasSeenTrivia(question.id);
+      var label = meta.label + "第 " + String(question.number) + " 题" + (seen ? "，已看过" : "，还没看过");
+      return [
+        '<button class="trivia-drawer', seen ? " is-seen" : "", '" type="button" data-action="trivia-pick" data-question-id="',
+        escapeHtml(question.id), '" aria-label="', escapeHtml(label), '">',
+        '<span class="trivia-drawer__paper" aria-hidden="true"></span>',
+        '<span class="trivia-drawer__number">', String(question.number).padStart(2, "0"), "</span>",
+        seen ? '<span class="visually-hidden">已看过</span>' : "",
+        "</button>",
+      ].join("");
+    }).join("");
+    return [
+      '<section class="screen screen-scroll trivia-page trivia-drawers">',
+      innerPageNav("trivia-home", "回到问答", "自己挑一个"),
+      '<header class="trivia-drawers__intro">',
+      '<h1>今天拉开哪一格？</h1>',
+      '<p>露出蓝纸条的，是你已经看过答案的题。想重看也可以照常打开。</p>',
+      "</header>",
+      '<div class="trivia-categories" aria-label="题目分类">', tabs, "</div>",
+      '<div class="trivia-cabinet-heading"><strong>', escapeHtml(meta.label), "</strong><span>轻轻挑一格</span></div>",
+      '<div class="trivia-cabinet" aria-label="', escapeHtml(meta.label), '题柜">', drawers, "</div>",
+      "</section>",
+    ].join("");
+  }
+
+  function renderTriviaQuestion() {
+    var question = triviaQuestionById(state.triviaQuestionId);
+    if (!question) return renderTriviaHome();
+    var meta = triviaCategoryMeta(question.category);
+    var revealed = state.triviaSelectedIndex >= 0;
+    var backAction = state.triviaOrigin === "drawer" ? "trivia-drawers" : "trivia-home";
+    var backLabel = state.triviaOrigin === "drawer" ? "回到题柜" : "回到问答";
+    var options = question.choices.map(function (choice, index) {
+      var isAnswer = revealed && index === question.answerIndex;
+      var isPicked = revealed && index === state.triviaSelectedIndex;
+      var classes = "trivia-option" + (isAnswer ? " is-answer" : "") + (isPicked ? " is-picked" : "");
+      var letter = String.fromCharCode(65 + index);
+      var ariaLabel = letter + "，" + choice + (isAnswer ? "，答案" : "") + (isPicked ? "，已选择" : "");
+      return [
+        '<button class="', classes, '" type="button" data-action="trivia-answer" data-answer-index="', String(index), '"',
+        revealed ? ' disabled aria-disabled="true"' : "",
+        ' aria-label="', escapeHtml(ariaLabel), '">',
+        '<span class="trivia-option__letter" aria-hidden="true">', letter, "</span>",
+        '<span class="trivia-option__copy">', escapeHtml(choice), "</span>",
+        isAnswer ? '<small class="trivia-option__mark">答案</small>' : "",
+        "</button>",
+      ].join("");
+    }).join("");
+    var answer = revealed ? [
+      '<aside class="trivia-answer-note" id="trivia-answer-note" tabindex="-1" aria-live="polite">',
+      '<span class="trivia-answer-note__tab" aria-hidden="true"></span>',
+      '<small>抽屉里的纸条</small>',
+      '<h2>答案是「', escapeHtml(question.answer), '」。</h2>',
+      '<p>', escapeHtml(question.explanation), "</p>",
+      '<span class="trivia-answer-note__source">资料来源：', escapeHtml(question.sourceLabel), "</span>",
+      "</aside>",
+      '<div class="trivia-question__actions">',
+      '<button class="primary-button" type="button" data-action="trivia-next">再来一题</button>',
+      '<div><button class="quiet-link" type="button" data-action="trivia-drawers">去题柜挑</button>',
+      '<button class="quiet-link" type="button" data-action="games">换个玩法</button></div>',
+      "</div>",
+    ].join("") : '<p class="trivia-question__permission">随便猜。这里没有分数，也不记对错。</p>';
+    return [
+      '<section class="screen screen-scroll trivia-page trivia-question">',
+      innerPageNav(backAction, backLabel, meta.label + " · " + String(question.number).padStart(2, "0")),
+      '<header class="trivia-question__header">',
+      '<span class="trivia-question__title">', escapeHtml(question.title), "</span>",
+      '<h1>', escapeHtml(question.prompt), "</h1>",
+      "</header>",
+      '<div class="trivia-options" aria-label="选择一个答案">', options, "</div>",
+      answer,
+      "</section>",
+    ].join("");
+  }
+
   function waitSupportMessages() {
     var messages = supportWordsForCurrentRun().map(function (word) {
       return "“" + word + "”";
@@ -1333,6 +1583,10 @@
     else if (state.route === "breathe") markup = renderBreathe();
     else if (state.route === "ground") markup = renderGround();
     else if (state.route === "wait") markup = renderWait();
+    else if (state.route === "games") markup = renderGames();
+    else if (state.route === "trivia-home") markup = renderTriviaHome();
+    else if (state.route === "trivia-drawers") markup = renderTriviaDrawers();
+    else if (state.route === "trivia-question") markup = renderTriviaQuestion();
     else if (state.route === "words") markup = renderWords();
     else if (state.route === "prepare") markup = renderPrepare();
     else if (state.route === "card") markup = renderCard();
@@ -2390,8 +2644,37 @@
       resetEmergencyRun();
       navigate("checkin");
     } else if (action === "start-game") {
+      state.gamesReturnRoute = state.route;
+      navigate("games");
+    } else if (action === "games-back") {
+      navigate(state.gamesReturnRoute || "checkin");
+    } else if (action === "games") {
+      navigate("games");
+    } else if (action === "play-windows" || action === "play-fog") {
+      state.waitActivity = action === "play-fog" ? "fog" : "windows";
+      if (state.waitActivity === "windows") {
+        state.waitWindowSequence = createWaitWindowSequence(state.waitWindowLength);
+        state.waitWindowInput = [];
+        state.waitWindowPhase = "showing";
+        state.waitWindowShowIndex = -1;
+      }
       if (!state.waitStartedAt) state.waitStartedAt = Date.now();
       navigate("wait");
+    } else if (action === "play-trivia" || action === "trivia-home") {
+      navigate("trivia-home");
+    } else if (action === "trivia-drawers") {
+      navigate("trivia-drawers");
+    } else if (action === "trivia-category") {
+      state.triviaCategory = control.getAttribute("data-category") || "nature";
+      render();
+    } else if (action === "trivia-pick") {
+      openTriviaQuestion(triviaQuestionById(control.getAttribute("data-question-id") || ""), "drawer");
+    } else if (action === "trivia-random") {
+      openRandomTrivia("");
+    } else if (action === "trivia-answer") {
+      revealTriviaAnswer(Number(control.getAttribute("data-answer-index")));
+    } else if (action === "trivia-next") {
+      openRandomTrivia(state.triviaOrigin === "drawer" ? state.triviaCategory : "");
     } else if (action === "calm") {
       navigate("calm");
     } else if (action === "open-learn") {
@@ -2639,6 +2922,13 @@
     getWaitWindowLength: function () { return state.waitWindowLength; },
     getWaitWindowPhase: function () { return state.waitWindowPhase; },
     getFogRevealRatio: function () { return Object.keys(fogVisited).length / (FOG_GRID_COLUMNS * FOG_GRID_ROWS); },
+    getTriviaCount: function () { return TRIVIA_QUESTIONS.length; },
+    getTriviaSeenIds: function () { return state.triviaSeenIds.slice(); },
+    getTriviaQuestion: function () {
+      var question = triviaQuestionById(state.triviaQuestionId);
+      if (!question) return null;
+      return { id: question.id, category: question.category, answerIndex: question.answerIndex, answer: question.answer };
+    },
     getCardSize: function () { return { width: CARD_WIDTH, height: CARD_HEIGHT }; },
     getWaitMessage: waitMessageFor,
     generateCard: function () {

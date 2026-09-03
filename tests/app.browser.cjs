@@ -195,11 +195,106 @@ async function run() {
     });
   })()`));
   assert.match(gameShortcut.text, /直接玩小游戏/);
-  assert.match(gameShortcut.text, /亮窗记忆 \/ 擦开图景/);
+  assert.match(gameShortcut.text, /亮窗记忆 \/ 擦开图景 \/ 冷知识问答/);
   assert.ok(gameShortcut.height >= 58);
   assert.equal(gameShortcut.fits, true);
   assert.equal(gameShortcut.width, gameShortcut.viewport);
   await evaluate(sessionId, "document.querySelector('[data-action=start-game]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "games");
+  assert.equal(await evaluate(sessionId, "document.querySelectorAll('.game-entry').length"), 3);
+  assert.match(await evaluate(sessionId, "document.querySelector('[data-action=play-trivia]').textContent"), /100 个小抽屉/);
+
+  await evaluate(sessionId, "document.querySelector('[data-action=play-trivia]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "trivia-home");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getTriviaCount()"), 100);
+  assert.equal(await evaluate(sessionId, "document.querySelectorAll('[data-action=trivia-random], [data-action=trivia-drawers]').length"), 2);
+
+  await evaluate(sessionId, "document.querySelector('[data-action=trivia-drawers]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "trivia-drawers");
+  const drawerState = JSON.parse(await evaluate(sessionId, `(() => {
+    const drawers = Array.from(document.querySelectorAll('[data-action=trivia-pick]'));
+    return JSON.stringify({
+      count: drawers.length,
+      firstWidth: drawers[0].getBoundingClientRect().width,
+      categories: document.querySelectorAll('[data-action=trivia-category]').length,
+      overflow: document.documentElement.scrollWidth > innerWidth
+    });
+  })()`));
+  assert.deepEqual(drawerState.count, 34);
+  assert.ok(drawerState.firstWidth >= 48);
+  assert.equal(drawerState.categories, 3);
+  assert.equal(drawerState.overflow, false);
+
+  await send("Emulation.setDeviceMetricsOverride", {
+    width: 320,
+    height: 568,
+    deviceScaleFactor: 2,
+    mobile: true,
+    screenWidth: 320,
+    screenHeight: 568,
+  }, sessionId);
+  await evaluate(sessionId, "new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+  const narrowDrawers = JSON.parse(await evaluate(sessionId, `JSON.stringify({
+    width: document.documentElement.scrollWidth,
+    viewport: innerWidth,
+    drawerWidth: document.querySelector('[data-action=trivia-pick]').getBoundingClientRect().width
+  })`));
+  assert.equal(narrowDrawers.width, narrowDrawers.viewport);
+  assert.ok(narrowDrawers.drawerWidth >= 48);
+  await send("Emulation.setDeviceMetricsOverride", {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 2,
+    mobile: true,
+    screenWidth: 390,
+    screenHeight: 844,
+  }, sessionId);
+  await evaluate(sessionId, "new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+
+  await evaluate(sessionId, "document.querySelector('[data-question-id=nature-001]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "trivia-question");
+  assert.equal(await evaluate(sessionId, "document.querySelectorAll('[data-action=trivia-answer]').length"), 3);
+  assert.deepEqual(JSON.parse(await evaluate(sessionId, "JSON.stringify(window.__ANDING_CARD__.getTriviaSeenIds())")), []);
+  const answeredTrivia = JSON.parse(await evaluate(sessionId, `(() => {
+    const question = window.__ANDING_CARD__.getTriviaQuestion();
+    const pickedIndex = (question.answerIndex + 1) % 3;
+    document.querySelector('[data-answer-index="' + pickedIndex + '"]').click();
+    return JSON.stringify({
+      id: question.id,
+      answer: question.answer,
+      heading: document.querySelector('#trivia-answer-note h2').textContent,
+      explanation: document.querySelector('#trivia-answer-note p').textContent,
+      answersShown: document.querySelectorAll('.trivia-option.is-answer').length,
+      pickedShown: document.querySelectorAll('.trivia-option.is-picked').length,
+      seen: window.__ANDING_CARD__.getTriviaSeenIds(),
+      saved: JSON.parse(localStorage.getItem('anding-card-trivia-seen-v1'))
+    });
+  })()`));
+  assert.equal(answeredTrivia.id, "nature-001");
+  assert.equal(answeredTrivia.heading, `答案是「${answeredTrivia.answer}」。`);
+  assert.ok(answeredTrivia.explanation.length > 20);
+  assert.equal(answeredTrivia.answersShown, 1);
+  assert.equal(answeredTrivia.pickedShown, 1);
+  assert.deepEqual(answeredTrivia.seen, ["nature-001"]);
+  assert.deepEqual(answeredTrivia.saved, ["nature-001"]);
+
+  const reloadedAfterTrivia = waitForEvent("Page.loadEventFired", sessionId);
+  await send("Page.reload", {}, sessionId);
+  await reloadedAfterTrivia;
+  await evaluate(sessionId, "document.fonts ? document.fonts.ready : Promise.resolve()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "home");
+  assert.deepEqual(JSON.parse(await evaluate(sessionId, "JSON.stringify(window.__ANDING_CARD__.getTriviaSeenIds())")), ["nature-001"]);
+  await evaluate(sessionId, "document.querySelector('[data-action=start]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=start-game]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=play-trivia]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=trivia-drawers]').click()");
+  assert.equal(await evaluate(sessionId, "document.querySelector('[data-question-id=nature-001]').classList.contains('is-seen')"), true);
+  await evaluate(sessionId, "document.querySelector('[data-action=trivia-home]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=trivia-random]').click()");
+  assert.notEqual(await evaluate(sessionId, "window.__ANDING_CARD__.getTriviaQuestion().id"), "nature-001");
+  await evaluate(sessionId, "document.querySelector('[data-action=trivia-home]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=games]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=play-windows]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "wait");
   assert.equal(await evaluate(sessionId, "document.querySelectorAll('[data-action=wait-window]').length"), 4);
   await evaluate(sessionId, "document.querySelector('[data-action=words]').click()");
@@ -728,7 +823,7 @@ async function run() {
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "help");
   assert.equal(await evaluate(sessionId, "document.querySelector('.phone-link').getAttribute('href')"), "tel:12356");
 
-  process.stdout.write("PASS: mobile emergency flow, card rendering, and album bridge\n");
+  process.stdout.write("PASS: mobile emergency flow, trivia cabinet, card rendering, and album bridge\n");
 }
 
 run()

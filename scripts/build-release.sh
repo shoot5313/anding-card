@@ -4,6 +4,7 @@ set -euo pipefail
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$repo_dir"
 
+npm run build:trivia
 npm test
 
 version=$(node -p "require('./package.json').version")
@@ -17,7 +18,7 @@ trap 'rm -rf "$stage_dir"' EXIT
 
 mkdir -p "$stage_dir/src" "$stage_dir/assets" "$repo_dir/dist"
 cp index.html styles.css "$stage_dir/"
-cp src/app.js "$stage_dir/src/"
+cp src/app.js src/trivia.js "$stage_dir/src/"
 cp assets/icon.svg assets/icon-180.png assets/icon-192.png "$stage_dir/assets/"
 
 (

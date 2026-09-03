@@ -8,12 +8,15 @@ const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const html = read("index.html");
 const css = read("styles.css");
 const app = read("src/app.js");
+const triviaSource = read("src/trivia.js");
+const trivia = require(path.join(root, "src", "trivia.js"));
+const { loadQuestions } = require(path.join(root, "scripts", "build-trivia-data.cjs"));
 const svg = read("assets/icon.svg");
 const secondFearNote = read("content/notes/第二层恐惧.md");
 const acceptanceNote = read("content/notes/来吧老朋友.md");
 const setbackNote = read("content/notes/又来了路还在.md");
 const workbookNote = read("content/notes/焦虑症与恐惧症手册-阅读导览.md");
-const runtimeSource = [html, css, app, svg].join("\n");
+const runtimeSource = [html, css, app, triviaSource, svg].join("\n");
 const publicProse = [app, read("README.md"), secondFearNote, acceptanceNote, setbackNote, workbookNote].join("\n");
 
 test("package version and the one offline entry agree", () => {
@@ -36,6 +39,7 @@ test("the entry obeys the mini-tool container contract", () => {
   assert.doesNotMatch(html, /\son[a-z]+\s*=|javascript:|<base\b|<iframe\b|<object\b/i);
   assert.doesNotMatch(html, /type="module"/i);
   assert.doesNotMatch(html, /https?:\/\//);
+  assert.match(html, /src="\.\/src\/trivia\.js"[\s\S]*src="\.\/src\/app\.js"/);
   assert.match(html, /src="\.\/src\/app\.js"/);
   assert.match(html, /href="\.\/styles\.css"/);
   const localResources = Array.from(html.matchAll(/(?:href|src)="\.\/([^"]+)"/g), (match) => match[1]);
@@ -88,7 +92,7 @@ test("the emergency route has active, focused stages and an always-available hum
   assert.doesNotMatch(app, /<p class="home-note">我也经历过惊恐/);
   assert.match(app, /data-action="start-game"/);
   assert.match(app, /直接玩小游戏/);
-  assert.match(app, /亮窗记忆 \/ 擦开图景/);
+  assert.match(app, /亮窗记忆 \/ 擦开图景 \/ 冷知识问答/);
   assert.match(app, /data-action="support-swap"/);
   assert.match(app, /再给我一句/);
   assert.match(app, /var DEFAULT_WORDS = \[\s*"怕可以在这里，我也可以在这里。"/);
@@ -101,6 +105,37 @@ test("the emergency route has active, focused stages and an always-available hum
   assert.match(html, /data-global-action="help"/);
   assert.match(app, /href="tel:12356"/);
   assert.doesNotMatch(runtimeSource, /进度条|完成度|打卡|成就/);
+});
+
+test("the cold-knowledge cabinet has 100 sourced, pressure-free questions", () => {
+  const counts = trivia.reduce((result, question) => {
+    result[question.category] = (result[question.category] || 0) + 1;
+    return result;
+  }, {});
+  const answerCounts = trivia.reduce((result, question) => {
+    result[question.answerIndex] += 1;
+    return result;
+  }, [0, 0, 0]);
+
+  assert.equal(trivia.length, 100);
+  assert.deepEqual(counts, { nature: 34, animal: 33, art: 33 });
+  assert.deepEqual(answerCounts, [33, 34, 33]);
+  assert.deepEqual(trivia, loadQuestions(), "generated runtime data must match the reviewed Markdown");
+  trivia.forEach((question) => {
+    assert.equal(question.choices.length, 3, question.id);
+    assert.ok(question.explanation.length > 20, question.id);
+    assert.ok(question.sourceLabel, question.id);
+    assert.equal(question.verifiedOn, "2026-09-03", question.id);
+  });
+  assert.doesNotMatch(triviaSource, /https?:\/\//);
+  assert.match(app, /TRIVIA_STORAGE_KEY = "anding-card-trivia-seen-v1"/);
+  assert.match(app, /random[\s\S]*unseen|var unseen/);
+  assert.match(app, /state\.triviaRecentIds\.length > 10/);
+  assert.match(app, /答案是「/);
+  assert.match(app, /这里没有分数，也不记对错/);
+  assert.doesNotMatch(app, /你答对了|你答错了|今天又知道了一件暂时用不上/);
+  assert.match(css, /grid-template-columns: repeat\(5, minmax\(48px, 1fr\)\)/);
+  assert.match(css, /\.trivia-drawer\.is-seen \.trivia-drawer__paper/);
 });
 
 test("the calm route has four useful branches without turning them into retention mechanics", () => {
@@ -181,12 +216,13 @@ test("personal memories are examples, never assigned as the reader's defaults", 
   assert.doesNotMatch(runtimeSource, /按摩颈部|把脸埋在冰冷水里|像排便困难时那样使劲/);
 });
 
-test("runtime is offline, permission-light, and stores only an optional draft", () => {
+test("runtime is offline, permission-light, and stores only the draft and seen question IDs", () => {
   assert.doesNotMatch(runtimeSource, /\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|getUserMedia)\s*\(/);
   assert.doesNotMatch(runtimeSource, /navigator\.(?:geolocation|clipboard|serviceWorker|bluetooth|usb|hid|serial)/);
   assert.doesNotMatch(runtimeSource, /\b(?:eval|Function)\s*\(|\bWebAssembly\b|\b(?:Worker|SharedWorker)\s*\(/);
   assert.doesNotMatch(runtimeSource, /window\.open\s*\(|<a[^>]+\bdownload\b/i);
   assert.match(app, /window\.localStorage\.getItem\(STORAGE_KEY\)/);
+  assert.match(app, /window\.localStorage\.setItem\(TRIVIA_STORAGE_KEY, JSON\.stringify\(state\.triviaSeenIds\)\)/);
   assert.match(app, /try \{/);
 
   const absoluteUrls = Array.from(runtimeSource.matchAll(/https?:\/\/[^\s"']+/g), (match) => match[0]);
@@ -224,6 +260,7 @@ test("release sources are comfortably below the upload ceiling", () => {
     "index.html",
     "styles.css",
     "src/app.js",
+    "src/trivia.js",
     "assets/icon.svg",
     "assets/icon-180.png",
     "assets/icon-192.png",

@@ -15,6 +15,7 @@ test("the generated Pages entry adds only the Web layer", () => {
   assert.match(webHtml, /rel="manifest" href="\.\/manifest\.webmanifest"/);
   assert.match(webHtml, /src="\.\/web\.js"/);
   assert.match(webHtml, /href="\.\/web\.css"/);
+  assert.match(webHtml, /src="\.\/src\/trivia\.js"/);
   assert.match(webHtml, /src="\.\/src\/app\.js"/);
   assert.doesNotMatch(webHtml, /<script(?![^>]*\bsrc=)/i);
 });
@@ -66,6 +67,7 @@ test("the service worker precaches the complete local runtime", () => {
     "./index.html",
     "./styles.css",
     "./web.css",
+    "./src/trivia.js",
     "./src/app.js",
     "./web.js",
     "./manifest.webmanifest",

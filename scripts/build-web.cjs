@@ -1,8 +1,10 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const { buildTriviaData } = require("./build-trivia-data.cjs");
 
 const root = path.resolve(__dirname, "..");
 const site = path.join(root, "site");
+buildTriviaData();
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const sourceHtml = fs.readFileSync(path.join(root, "index.html"), "utf8");
 
@@ -43,6 +45,7 @@ fs.writeFileSync(path.join(site, "index.html"), webHtml);
 fs.writeFileSync(path.join(site, ".nojekyll"), "");
 fs.copyFileSync(path.join(root, "styles.css"), path.join(site, "styles.css"));
 fs.copyFileSync(path.join(root, "src", "app.js"), path.join(site, "src", "app.js"));
+fs.copyFileSync(path.join(root, "src", "trivia.js"), path.join(site, "src", "trivia.js"));
 
 [
   "icon.svg",
