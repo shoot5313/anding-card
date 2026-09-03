@@ -34,6 +34,24 @@
     "来吧，惊恐。你就这点本事吗？",
   ];
 
+  var PRACTICE_OPTIONS = {
+    feet: {
+      label: "脚底碰着地面",
+      prompt: "脚底和地面接触时，最像下面哪一个？",
+      qualities: ["硬", "软", "有压力", "说不清"],
+    },
+    hands: {
+      label: "手心的温度",
+      prompt: "手心现在最像下面哪一个？",
+      qualities: ["有点凉", "有点暖", "微微潮", "说不清"],
+    },
+    sound: {
+      label: "远处一个声音",
+      prompt: "那个声音现在最像下面哪一个？",
+      qualities: ["持续着", "一阵一阵", "很远", "说不清"],
+    },
+  };
+
   var DEFAULT_DRAFT = {
     anchor: "",
     scenePlace: "",
@@ -135,6 +153,8 @@
   var state = {
     route: "home",
     returnRoute: "home",
+    prepareReturnRoute: "home",
+    understandReturnRoute: "home",
     need: "",
     orientStep: 0,
     position: "",
@@ -146,6 +166,18 @@
     waitAcknowledged: false,
     waitSupportIndex: -1,
     supportWordIndex: 0,
+    learnLayer: "",
+    practiceStep: 0,
+    practiceFocus: "",
+    practiceQuality: "",
+    reflection: {
+      fear: "",
+      meaning: "",
+      reality: "",
+      next: "",
+    },
+    reflectionDone: false,
+    reflectionStatus: "",
     tracePath: randomTracePath(),
     draft: loadDraft(),
     cardDataUrl: "",
@@ -379,10 +411,252 @@
       "</div>",
       '<p class="home-note">我也经历过惊恐。现在不用读说明，按下去，一次只做一件事。</p>',
       '<div class="home__secondary">',
-      '<button class="secondary-button" type="button" data-action="prepare">现在还好，先准备</button>',
+      '<button class="secondary-button" type="button" data-action="calm">我现在还好</button>',
       '<button class="text-button" type="button" data-action="understand">先了解一下</button>',
       "</div>",
       "</div>",
+      "</section>",
+    ].join("");
+  }
+
+  function innerPageNav(backAction, backLabel, eyebrow) {
+    return [
+      '<nav class="page-nav">',
+      '<button class="page-back" type="button" data-action="', escapeHtml(backAction), '">',
+      escapeHtml(backLabel),
+      "</button>",
+      '<span class="eyebrow">', escapeHtml(eyebrow), "</span>",
+      "</nav>",
+    ].join("");
+  }
+
+  function renderCalmHome() {
+    return [
+      '<section class="screen screen-scroll calm-hub">',
+      innerPageNav("home", "回到首页", "状态好时"),
+      '<header class="calm-hub__intro">',
+      '<span class="calm-hub__kicker">我现在还好</span>',
+      '<h1>现在不用急着做什么。<br>时间是你的。</h1>',
+      '<p>可以看懂一点，也可以只留一句话给下一次。这里没有必须完成的顺序。</p>',
+      "</header>",
+      '<div class="calm-ledger" aria-label="平时可以做的事">',
+      '<button class="calm-entry" type="button" data-action="open-learn">',
+      '<span class="calm-entry__mark">理解</span>',
+      '<span class="calm-entry__text"><strong>看懂它</strong><small>先从“为什么越怕越响”开始</small></span>',
+      '<span class="calm-entry__arrow" aria-hidden="true">→</span>',
+      "</button>",
+      '<button class="calm-entry" type="button" data-action="open-practice">',
+      '<span class="calm-entry__mark">练习</span>',
+      '<span class="calm-entry__text"><strong>平时练一小步</strong><small>练习看见感觉，不急着处理</small></span>',
+      '<span class="calm-entry__arrow" aria-hidden="true">→</span>',
+      "</button>",
+      '<button class="calm-entry" type="button" data-action="prepare">',
+      '<span class="calm-entry__mark">准备</span>',
+      '<span class="calm-entry__text"><strong>做自己的卡</strong><small>留下锚点、场景和真正相信的话</small></span>',
+      '<span class="calm-entry__arrow" aria-hidden="true">→</span>',
+      "</button>",
+      '<button class="calm-entry" type="button" data-action="open-reflection">',
+      '<span class="calm-entry__mark">回看</span>',
+      '<span class="calm-entry__text"><strong>走过之后想一想</strong><small>把“我以为”与“后来发生”放在一起</small></span>',
+      '<span class="calm-entry__arrow" aria-hidden="true">→</span>',
+      "</button>",
+      "</div>",
+      '<p class="calm-hub__leave">不需要全部做完。看一页也算，随时可以离开。</p>',
+      "</section>",
+    ].join("");
+  }
+
+  function renderLearn() {
+    return [
+      '<section class="screen screen-scroll learning-index">',
+      innerPageNav("calm", "回到平时", "看懂它"),
+      '<header class="learning-index__intro">',
+      '<h1>先弄懂一个<br>真正卡住你的地方。</h1>',
+      '<p>不是考试，也不需要一次读完。每篇只回答一个问题。</p>',
+      "</header>",
+      '<button class="featured-note" type="button" data-action="open-learn-article">',
+      '<span class="featured-note__meta">第一篇 · 第二层恐惧</span>',
+      '<strong>“那又怎样？”<br>不是逞强</strong>',
+      '<span>身体刚响了一声，脑子里的第二声警报为什么会跟上来？</span>',
+      '<i aria-hidden="true">读这一篇 →</i>',
+      "</button>",
+      '<button class="brief-link" type="button" data-action="open-understand">',
+      '<span><strong>先知道最基本的三件事</strong><small>身体警报、第二层恐惧、它会变化</small></span>',
+      '<span aria-hidden="true">→</span>',
+      "</button>",
+      '<section class="learning-coming">',
+      '<span class="eyebrow">接下来慢慢写</span>',
+      '<ul>',
+      '<li>接受不是认输，是不再跟身体拔河</li>',
+      '<li>“飘然”不是强迫自己放松</li>',
+      '<li>症状又来了，不等于回到原点</li>',
+      "</ul>",
+      "</section>",
+      '<section class="quiet-bookshelf">',
+      '<span class="eyebrow">这些书会成为线索</span>',
+      '<p>《焦虑症的自救》 · 《直视骄阳》 · 《心湖上的倒影》 · 《世界上最快乐的人》 · 《庄子》</p>',
+      '<small>书不是答案。这里会保留真正有用的部分，也会删掉过时、绝对或让人羞耻的说法。</small>',
+      "</section>",
+      "</section>",
+    ].join("");
+  }
+
+  function learnLayerCopy() {
+    if (state.learnLayer === "first") {
+      return "这是第一声：身体和情绪正在发生反应。先只描述它，不急着替它解释。";
+    }
+    if (state.learnLayer === "second") {
+      return "这是第二声：脑子开始解释、预测并催你立刻处理。它可能继续把警报抬高。";
+    }
+    return "点一下两句话，看看它们做的事有什么不同。";
+  }
+
+  function renderLearnArticle() {
+    return [
+      '<section class="screen screen-scroll note-article">',
+      innerPageNav("open-learn", "回到看懂它", "个人阅读笔记"),
+      '<article>',
+      '<header class="note-article__header">',
+      '<span>第二层恐惧</span>',
+      '<h1>“那又怎样？”<br>不是逞强</h1>',
+      '<p>惊恐最难受的地方，往往不只是一阵心跳、发麻或眩晕。身体刚响了一声，脑子里的第二声警报就跟上来了。</p>',
+      "</header>",
+      '<section class="note-section">',
+      '<h2>两声警报</h2>',
+      '<p>克莱尔·威克斯给了我一个很有用的分法。第一层是身体和情绪本来的反应；第二层，是我开始害怕这些反应，盯着它们，催它们消失，再把每一次波动解释成危险。</p>',
+      '<div class="fear-layer-demo">',
+      '<button class="', state.learnLayer === "first" ? "is-selected" : "", '" type="button" data-action="learn-layer" data-layer="first" aria-pressed="', state.learnLayer === "first" ? "true" : "false", '"><span>第一声</span><strong>心跳突然变快</strong></button>',
+      '<button class="', state.learnLayer === "second" ? "is-selected" : "", '" type="button" data-action="learn-layer" data-layer="second" aria-pressed="', state.learnLayer === "second" ? "true" : "false", '"><span>第二声</span><strong>它是不是要出事？</strong></button>',
+      '<p id="learn-layer-copy" aria-live="polite">', escapeHtml(learnLayerCopy()), "</p>",
+      "</div>",
+      '<p>这个模型不是对所有症状的诊断，却能解释我为什么会越怕越响：我不只在经历感觉，还在害怕自己正在经历感觉。</p>',
+      "</section>",
+      '<section class="note-section">',
+      '<h2>它在回答什么</h2>',
+      '<p>“那又怎样”不是说身体怎样都无所谓，也不是拿一句狠话证明自己不怕。我是在回答第二声警报：我听见你说最坏的事情要发生了，但我不必马上检查、逃开，也不必强迫自己立刻平静。</p>',
+      '<blockquote class="personal-line">怕可以在这里，<br>我也可以在这里。</blockquote>',
+      "</section>",
+      '<section class="note-section note-questions">',
+      '<h2>下次先问三句</h2>',
+      '<ol>',
+      '<li>现在最响的是哪一种感觉？</li>',
+      '<li>我又在害怕它意味着什么？</li>',
+      '<li>第二个问题，能不能先不解决？</li>',
+      "</ol>",
+      '<p>“那又怎样”没有替我赶走惊恐。它只是让我不再继续给惊恐添一层惊恐。对我来说，这不是逞强，而是把一点选择权拿回来。</p>',
+      "</section>",
+      '<aside class="note-boundary">第一次出现的症状，或与以往明显不同的症状，仍然应该交给医生判断。</aside>',
+      '<footer class="note-source">阅读线索：克莱尔·威克斯《焦虑症的自救》。本文是个人阅读笔记与经验整理，不替代诊断和治疗。</footer>',
+      "</article>",
+      '<div class="article-actions">',
+      '<button class="primary-button" type="button" data-action="open-practice">平时练一小步</button>',
+      '<button class="secondary-button" type="button" data-action="open-learn">回到全部内容</button>',
+      "</div>",
+      "</section>",
+    ].join("");
+  }
+
+  function practiceOption() {
+    return PRACTICE_OPTIONS[state.practiceFocus] || PRACTICE_OPTIONS.feet;
+  }
+
+  function renderPractice() {
+    var content = "";
+    if (state.practiceStep === 0) {
+      content = [
+        '<header class="calm-tool__intro">',
+        '<span class="eyebrow">平时练一小步</span>',
+        '<h1>不是练到不怕。<br>只练习先不处理。</h1>',
+        '<p>选一样此刻很轻、很普通的感觉。不诱发症状，也不用坚持。</p>',
+        "</header>",
+        '<div class="practice-choices">',
+        '<button type="button" data-action="practice-focus" data-focus="feet">脚底碰着地面</button>',
+        '<button type="button" data-action="practice-focus" data-focus="hands">手心的温度</button>',
+        '<button type="button" data-action="practice-focus" data-focus="sound">远处一个声音</button>',
+        "</div>",
+      ].join("");
+    } else if (state.practiceStep === 1) {
+      var option = practiceOption();
+      var qualities = option.qualities.map(function (quality) {
+        return '<button type="button" data-action="practice-quality" data-quality="' + escapeHtml(quality) + '">' + escapeHtml(quality) + "</button>";
+      }).join("");
+      content = [
+        '<header class="calm-tool__intro">',
+        '<span class="eyebrow">只说能确认的事实</span>',
+        '<h1>', escapeHtml(option.label), "</h1>",
+        '<p>', escapeHtml(option.prompt), "</p>",
+        "</header>",
+        '<div class="quality-choices">', qualities, "</div>",
+      ].join("");
+    } else {
+      content = [
+        '<div class="practice-result">',
+        '<span class="practice-result__mark" aria-hidden="true"></span>',
+        '<p>你刚才注意到</p>',
+        '<h1>“', escapeHtml(state.practiceQuality), '”</h1>',
+        '<p>你没有负责把它变成别的感觉，只是看见了它。这一小步练的不是放松，而是感觉出现时，先不急着服从警报。</p>',
+        '<blockquote>那又怎样？<br>它可以先在这里。</blockquote>',
+        "</div>",
+        '<div class="calm-tool__actions">',
+        '<button class="primary-button" type="button" data-action="practice-restart">再练一个</button>',
+        '<button class="secondary-button" type="button" data-action="calm">练到这里就好</button>',
+        "</div>",
+      ].join("");
+    }
+    return [
+      '<section class="screen screen-scroll calm-tool">',
+      innerPageNav("calm", "回到平时", "不用做对"),
+      content,
+      state.practiceStep < 2
+        ? '<div class="practice-exit"><button type="button" data-action="practice-emergency">现在开始难受了</button><span>只在状态平稳时练；明显不适就停。</span></div>'
+        : "",
+      "</section>",
+    ].join("");
+  }
+
+  function reflectionItem(label, value) {
+    if (!value) return "";
+    return '<div class="reflection-item"><span>' + escapeHtml(label) + "</span><p>" + escapeHtml(value) + "</p></div>";
+  }
+
+  function renderReflection() {
+    if (state.reflectionDone) {
+      return [
+        '<section class="screen screen-scroll reflection-page">',
+        innerPageNav("calm", "回到平时", "走过之后"),
+        '<header class="reflection-page__intro">',
+        '<h1>把两件事<br>放在一起看。</h1>',
+        '<p>当时的担心是真的很响；后来实际发生的事，也值得留下来。</p>',
+        "</header>",
+        '<div class="reflection-sheet">',
+        reflectionItem("当时最吓我的", state.reflection.fear),
+        reflectionItem("我以为会发生", state.reflection.meaning),
+        reflectionItem("后来实际发生", state.reflection.reality),
+        reflectionItem("我想留给下次", state.reflection.next),
+        "</div>",
+        '<p class="reflection-privacy">这不是成绩，也不会形成次数或时长记录。</p>',
+        '<div class="calm-tool__actions">',
+        '<button class="primary-button" type="button" data-action="reflection-reset">重新写一次</button>',
+        '<button class="secondary-button" type="button" data-action="calm">回到平时</button>',
+        "</div>",
+        "</section>",
+      ].join("");
+    }
+    return [
+      '<section class="screen screen-scroll reflection-page">',
+      innerPageNav("calm", "回到平时", "走过之后"),
+      '<header class="reflection-page__intro">',
+      '<h1>不是复盘表现。<br>只看发生了什么。</h1>',
+      '<p>不用写完整。内容只留在这次打开里，不会保存成发作记录。</p>',
+      "</header>",
+      '<form class="reflection-form" id="reflection-form">',
+      '<label><span>刚才最吓我的是什么？</span><textarea id="reflection-fear" maxlength="120" placeholder="一个感觉、念头或画面">', escapeHtml(state.reflection.fear), "</textarea></label>",
+      '<label><span>我当时以为会发生什么？</span><textarea id="reflection-meaning" maxlength="120" placeholder="例如：我怕自己会失控">', escapeHtml(state.reflection.meaning), "</textarea></label>",
+      '<label><span>后来实际发生了什么？</span><textarea id="reflection-reality" maxlength="120" placeholder="只写事实，不用总结得很好">', escapeHtml(state.reflection.reality), "</textarea></label>",
+      '<label><span>现在想留给下次一句什么？</span><textarea id="reflection-next" maxlength="80" placeholder="也可以借用：那又怎样？">', escapeHtml(state.reflection.next), "</textarea></label>",
+      '<button class="primary-button" type="submit">把它们放在一起</button>',
+      '<p class="reflection-status" id="reflection-status" aria-live="polite">', escapeHtml(state.reflectionStatus), "</p>",
+      "</form>",
       "</section>",
     ].join("");
   }
@@ -659,9 +933,10 @@
 
   function renderPrepare() {
     var draft = state.draft;
+    var prepareBackLabel = state.prepareReturnRoute === "calm" ? "回到平时" : "回到首页";
     return [
       '<section class="screen screen-scroll">',
-      '<nav class="page-nav"><button class="page-back" type="button" data-action="home">回到首页</button><span class="eyebrow">状态好时再写</span></nav>',
+      innerPageNav("prepare-back", prepareBackLabel, "状态好时再写"),
       '<h1 class="page-title">现在的你，比发作时的你更清楚该说什么。</h1>',
       '<p class="page-lead">写给那个时候的自己。想不到时，先借一个真实例子看看，再慢慢换成你自己的。</p>',
       '<form class="prepare-form" id="prepare-form">',
@@ -746,7 +1021,7 @@
   function renderUnderstand() {
     return [
       '<section class="screen screen-scroll">',
-      '<nav class="page-nav"><button class="page-back" type="button" data-action="home">回到首页</button><span class="eyebrow">先知道这些就够</span></nav>',
+      innerPageNav("understand-back", state.understandReturnRoute === "learn" ? "回到看懂它" : "回到首页", "先知道这些就够"),
       '<h1 class="page-title">惊恐很响，解释可以很短。</h1>',
       '<section class="info-section"><h2>这是什么</h2><p>惊恐发作像身体警报突然拉响：心跳变快、呼吸急、发麻或发晕都可能一起出现。感受很强，但仍要先排除身体原因。</p></section>',
       '<section class="info-section"><h2>为什么越来越怕</h2><p>身体反应是一层；“这些感觉是不是危险”的担心又加一层。越盯着它、越想立刻赶走它，恐惧可能被继续放大。</p></section>',
@@ -791,6 +1066,11 @@
   function render() {
     var markup = "";
     if (state.route === "home") markup = renderHome();
+    else if (state.route === "calm") markup = renderCalmHome();
+    else if (state.route === "learn") markup = renderLearn();
+    else if (state.route === "learn-article") markup = renderLearnArticle();
+    else if (state.route === "practice") markup = renderPractice();
+    else if (state.route === "reflection") markup = renderReflection();
     else if (state.route === "checkin") markup = renderCheckin();
     else if (state.route === "orient") markup = renderOrient();
     else if (state.route === "accept") markup = renderAccept();
@@ -1406,6 +1686,35 @@
     if (traceBoard) followWaitTrace(event);
   }
 
+  function resetPractice() {
+    state.practiceStep = 0;
+    state.practiceFocus = "";
+    state.practiceQuality = "";
+  }
+
+  function emptyReflection() {
+    return { fear: "", meaning: "", reality: "", next: "" };
+  }
+
+  function readReflectionFromForm() {
+    function value(id, maxLength) {
+      var field = document.getElementById(id);
+      return cleanText(field ? field.value : "", maxLength);
+    }
+    return {
+      fear: value("reflection-fear", 120),
+      meaning: value("reflection-meaning", 120),
+      reality: value("reflection-reality", 120),
+      next: value("reflection-next", 80),
+    };
+  }
+
+  function updateReflectionFromForm() {
+    if (state.route !== "reflection" || state.reflectionDone) return;
+    state.reflection = readReflectionFromForm();
+    state.reflectionStatus = "";
+  }
+
   function resetEmergencyRun() {
     state.need = "";
     state.orientStep = 0;
@@ -1432,10 +1741,60 @@
     if (action === "start") {
       resetEmergencyRun();
       navigate("checkin");
+    } else if (action === "calm") {
+      navigate("calm");
+    } else if (action === "open-learn") {
+      navigate("learn");
+    } else if (action === "open-learn-article") {
+      state.learnLayer = "";
+      navigate("learn-article");
+    } else if (action === "learn-layer") {
+      state.learnLayer = control.getAttribute("data-layer") || "";
+      var layerButtons = app.querySelectorAll('[data-action="learn-layer"]');
+      Array.prototype.forEach.call(layerButtons, function (button) {
+        var selected = button.getAttribute("data-layer") === state.learnLayer;
+        button.classList.toggle("is-selected", selected);
+        button.setAttribute("aria-pressed", selected ? "true" : "false");
+      });
+      var layerCopy = document.getElementById("learn-layer-copy");
+      if (layerCopy) layerCopy.textContent = learnLayerCopy();
+    } else if (action === "open-practice") {
+      resetPractice();
+      navigate("practice");
+    } else if (action === "practice-focus") {
+      state.practiceFocus = control.getAttribute("data-focus") || "feet";
+      state.practiceStep = 1;
+      render();
+    } else if (action === "practice-quality") {
+      state.practiceQuality = control.getAttribute("data-quality") || "说不清";
+      state.practiceStep = 2;
+      render();
+    } else if (action === "practice-restart") {
+      resetPractice();
+      render();
+    } else if (action === "practice-emergency") {
+      resetEmergencyRun();
+      navigate("checkin");
+    } else if (action === "open-reflection") {
+      navigate("reflection");
+    } else if (action === "reflection-reset") {
+      state.reflection = emptyReflection();
+      state.reflectionDone = false;
+      state.reflectionStatus = "";
+      render();
     } else if (action === "prepare") {
+      state.prepareReturnRoute = state.route === "calm" ? "calm" : "home";
       navigate("prepare");
     } else if (action === "understand") {
+      state.understandReturnRoute = state.route;
       navigate("understand");
+    } else if (action === "open-understand") {
+      state.understandReturnRoute = state.route;
+      navigate("understand");
+    } else if (action === "prepare-back") {
+      navigate(state.prepareReturnRoute || "home");
+    } else if (action === "understand-back") {
+      navigate(state.understandReturnRoute || "home");
     } else if (action === "choose-need") {
       state.need = control.getAttribute("data-need") || "unclear";
       state.orientStep = 0;
@@ -1511,6 +1870,7 @@
 
   app.addEventListener("input", function (event) {
     updateDraftFromForm();
+    updateReflectionFromForm();
     updateGroundingAnswerInput(event);
   });
   app.addEventListener("change", updateDraftFromForm);
@@ -1528,13 +1888,30 @@
     window.setTimeout(setAppHeight, 0);
   });
   app.addEventListener("submit", function (event) {
-    if (event.target.id !== "prepare-form") return;
-    event.preventDefault();
-    state.draft = readDraftFromForm();
-    persistDraftSoon();
-    state.cardDataUrl = generateCardDataUrl(state.draft);
-    state.cardSaved = false;
-    if (state.cardDataUrl) navigate("card");
+    if (event.target.id === "prepare-form") {
+      event.preventDefault();
+      state.draft = readDraftFromForm();
+      persistDraftSoon();
+      state.cardDataUrl = generateCardDataUrl(state.draft);
+      state.cardSaved = false;
+      if (state.cardDataUrl) navigate("card");
+    } else if (event.target.id === "reflection-form") {
+      event.preventDefault();
+      state.reflection = readReflectionFromForm();
+      var hasReflection = state.reflection.fear
+        || state.reflection.meaning
+        || state.reflection.reality
+        || state.reflection.next;
+      if (!hasReflection) {
+        state.reflectionStatus = "随便写下一小句就可以。";
+        var reflectionStatus = document.getElementById("reflection-status");
+        if (reflectionStatus) reflectionStatus.textContent = state.reflectionStatus;
+        return;
+      }
+      state.reflectionDone = true;
+      state.reflectionStatus = "";
+      render();
+    }
   });
 
   document.addEventListener("click", function (event) {

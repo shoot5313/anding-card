@@ -122,7 +122,8 @@ async function run() {
     footerVisible: document.querySelector('.boundary-footer').getBoundingClientRect().bottom <= innerHeight,
     webInstall: Boolean(document.querySelector('[data-web-action=install]')),
     brand: document.querySelector('.home-title').textContent,
-    subtitle: document.querySelector('.home-subtitle').textContent
+    subtitle: document.querySelector('.home-subtitle').textContent,
+    calmLabel: document.querySelector('[data-action=calm]').textContent
   })`);
   const initialState = JSON.parse(initial);
   assert.equal(initialState.route, "home");
@@ -132,6 +133,7 @@ async function run() {
   assert.equal(initialState.webInstall, expectsWebLayer);
   assert.equal(initialState.brand, "缓一缓");
   assert.equal(initialState.subtitle, "它会过去");
+  assert.equal(initialState.calmLabel, "我现在还好");
 
   if (/^https?:\/\//.test(url)) {
     const pwaState = JSON.parse(await evaluate(sessionId, `(async () => {
@@ -318,8 +320,60 @@ async function run() {
   assert.equal(wordsFit, true, "default words must not collide with the primary action");
 
   await evaluate(sessionId, "document.querySelector('[data-action=home]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-action=calm]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "calm");
+  assert.equal(await evaluate(sessionId, "document.querySelectorAll('.calm-entry').length"), 4);
+
+  await evaluate(sessionId, "document.querySelector('[data-action=open-learn]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "learn");
+  await evaluate(sessionId, "document.querySelector('[data-action=open-learn-article]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "learn-article");
+  const layerLearning = JSON.parse(await evaluate(sessionId, `(() => {
+    const second = document.querySelector('[data-layer=second]');
+    second.click();
+    return JSON.stringify({
+      pressed: second.getAttribute('aria-pressed'),
+      copy: document.querySelector('#learn-layer-copy').textContent
+    });
+  })()`));
+  assert.equal(layerLearning.pressed, "true");
+  assert.match(layerLearning.copy, /第二声/);
+
+  await evaluate(sessionId, "document.querySelector('[data-action=open-practice]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "practice");
+  await evaluate(sessionId, "document.querySelector('[data-focus=feet]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-quality=\"有压力\"]').click()");
+  assert.match(await evaluate(sessionId, "document.querySelector('.practice-result').textContent"), /有压力/);
+  await evaluate(sessionId, "document.querySelector('[data-action=calm]').click()");
+
+  await evaluate(sessionId, "document.querySelector('[data-action=open-reflection]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "reflection");
+  const reflection = JSON.parse(await evaluate(sessionId, `(() => {
+    const values = {
+      'reflection-fear': '心跳漏了一下',
+      'reflection-meaning': '我以为它会停',
+      'reflection-reality': '后来它慢慢平静了',
+      'reflection-next': '那又怎样？'
+    };
+    Object.keys(values).forEach((id) => {
+      const field = document.querySelector('#' + id);
+      field.value = values[id];
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    document.querySelector('#reflection-form button[type=submit]').click();
+    return JSON.stringify({
+      text: document.querySelector('.reflection-sheet').textContent,
+      persistedKeys: Object.keys(localStorage).filter((key) => /reflection/i.test(key))
+    });
+  })()`));
+  assert.match(reflection.text, /心跳漏了一下/);
+  assert.match(reflection.text, /后来它慢慢平静了/);
+  assert.deepEqual(reflection.persistedKeys, []);
+  await evaluate(sessionId, "document.querySelector('[data-action=calm]').click()");
+
   await evaluate(sessionId, "document.querySelector('[data-action=prepare]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "prepare");
+  assert.equal(await evaluate(sessionId, "document.querySelector('.page-back').textContent"), "回到平时");
   assert.equal(await evaluate(sessionId, "document.querySelector('#anchor').value"), "");
   const examples = JSON.parse(await evaluate(sessionId, `(() => {
     document.querySelector('[data-action=use-anchor-example]').click();

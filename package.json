@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
-  "description": "一个为熟悉的惊恐反应准备的离线自助放松小工具。",
+  "description": "一个在惊恐时陪你走几分钟、平静时陪你慢慢看懂它的离线自助工具。",
   "homepage": "https://shoot5313.github.io/anding-card/",
   "repository": {
     "type": "git",

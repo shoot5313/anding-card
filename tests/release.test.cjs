@@ -9,6 +9,7 @@ const html = read("index.html");
 const css = read("styles.css");
 const app = read("src/app.js");
 const svg = read("assets/icon.svg");
+const secondFearNote = read("content/notes/第二层恐惧.md");
 const runtimeSource = [html, css, app, svg].join("\n");
 
 test("package version and the one offline entry agree", () => {
@@ -66,6 +67,23 @@ test("the emergency route has active, focused stages and an always-available hum
   assert.match(html, /data-global-action="help"/);
   assert.match(app, /href="tel:12356"/);
   assert.doesNotMatch(runtimeSource, /进度条|完成度|打卡|成就/);
+});
+
+test("the calm route has four useful branches without turning them into retention mechanics", () => {
+  ["看懂它", "平时练一小步", "做自己的卡", "走过之后想一想"].forEach((label) => {
+    assert.ok(app.includes(label), `missing calm branch: ${label}`);
+  });
+  assert.match(app, /data-action="open-learn"/);
+  assert.match(app, /data-action="open-practice"/);
+  assert.match(app, /data-action="open-reflection"/);
+  assert.match(app, /data-action="learn-layer"/);
+  assert.match(app, /id="reflection-form"/);
+  assert.match(app, /不会保存成发作记录/);
+  assert.match(secondFearNote, /“那又怎样？”不是逞强/);
+  assert.match(secondFearNote, /两声警报/);
+  assert.match(secondFearNote, /个人阅读笔记与经验整理/);
+  assert.doesNotMatch(app + secondFearNote, /心律不齐一点都不危险|不需要镇静剂|唯一的敌人就是自己的恐惧/);
+  assert.doesNotMatch(app, /连续学习|阅读天数|完成百分比/);
 });
 
 test("time copy avoids promises the tool cannot make", () => {
