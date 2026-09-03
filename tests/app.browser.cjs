@@ -279,50 +279,133 @@ async function run() {
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "wait");
   assert.match(await evaluate(sessionId, "document.querySelector('#wait-timer').textContent"), /^00:0[01]$/);
   assert.match(await evaluate(sessionId, "document.querySelector('.grounding-recall').textContent"), /窗框/);
+  await evaluate(sessionId, `new Promise((resolve, reject) => {
+    const started = Date.now();
+    function check() {
+      if (window.__ANDING_CARD__.getWaitWindowPhase() === 'input') return resolve();
+      if (Date.now() - started > 5000) return reject(new Error('window sequence did not finish playing'));
+      setTimeout(check, 40);
+    }
+    check();
+  })`);
   const windowState = JSON.parse(await evaluate(sessionId, `(() => {
     const windows = Array.from(document.querySelectorAll('[data-action=wait-window]'));
-    const lit = document.querySelector('.wait-window.is-lit');
-    const other = document.querySelector('.wait-window:not(.is-lit)');
-    const before = lit.getAttribute('data-window');
-    other.click();
+    const sequence = window.__ANDING_CARD__.getWaitSequence();
+    const wrong = (sequence[0] + 1) % windows.length;
+    windows[wrong].click();
     const patientCopy = document.querySelector('#wait-activity-status').textContent;
-    lit.click();
-    return JSON.stringify({ count: windows.length, before, patientCopy });
-  })()`));
-  assert.equal(windowState.count, 4);
-  assert.match(windowState.patientCopy, /还在等你/);
-  await evaluate(sessionId, "new Promise((resolve) => setTimeout(resolve, 760))");
-  const nextWindow = JSON.parse(await evaluate(sessionId, `(() => {
-    const lit = document.querySelector('.wait-window.is-lit');
+    document.querySelector('[data-action=wait-replay]').click();
     return JSON.stringify({
-      target: lit.getAttribute('data-window'),
-      label: lit.getAttribute('aria-label'),
-      status: document.querySelector('#wait-activity-status').textContent,
-      minWidth: lit.getBoundingClientRect().width,
-      minHeight: lit.getBoundingClientRect().height
+      count: windows.length,
+      sequence,
+      replayedSequence: window.__ANDING_CARD__.getWaitSequence(),
+      lengthAfterReplay: window.__ANDING_CARD__.getWaitWindowLength(),
+      patientCopy,
+      phase: window.__ANDING_CARD__.getWaitWindowPhase(),
+      replayLabel: document.querySelector('[data-action=wait-replay]').textContent,
+      difficultyLabel: document.querySelector('[data-action=wait-difficulty]').textContent
     });
   })()`));
-  assert.notEqual(nextWindow.target, windowState.before);
-  assert.match(nextWindow.label, /现在亮着/);
-  assert.match(nextWindow.status, /下一扇/);
-  assert.ok(nextWindow.minWidth >= 100);
-  assert.ok(nextWindow.minHeight >= 56);
+  assert.equal(windowState.count, 4);
+  assert.equal(windowState.sequence.length, 3);
+  assert.notEqual(windowState.sequence[0], windowState.sequence[1]);
+  assert.notEqual(windowState.sequence[1], windowState.sequence[2]);
+  assert.match(windowState.patientCopy, /忘了很正常/);
+  assert.deepEqual(windowState.replayedSequence, windowState.sequence);
+  assert.equal(windowState.lengthAfterReplay, 3);
+  assert.equal(windowState.phase, "showing");
+  assert.match(windowState.replayLabel, /再看一遍/);
+  assert.match(windowState.difficultyLabel, /四扇/);
+  await evaluate(sessionId, `new Promise((resolve, reject) => {
+    const started = Date.now();
+    function check() {
+      if (window.__ANDING_CARD__.getWaitWindowPhase() === 'input') return resolve();
+      if (Date.now() - started > 6000) return reject(new Error('window sequence did not replay'));
+      setTimeout(check, 40);
+    }
+    check();
+  })`);
+  const difficultyState = JSON.parse(await evaluate(sessionId, `(() => {
+    const before = window.__ANDING_CARD__.getWaitSequence();
+    document.querySelector('[data-action=wait-difficulty]').click();
+    return JSON.stringify({
+      before,
+      after: window.__ANDING_CARD__.getWaitSequence(),
+      length: window.__ANDING_CARD__.getWaitWindowLength(),
+      phase: window.__ANDING_CARD__.getWaitWindowPhase(),
+      prompt: document.querySelector('#wait-window-prompt').textContent,
+      nextLabel: document.querySelector('[data-action=wait-difficulty]').textContent
+    });
+  })()`));
+  assert.equal(difficultyState.before.length, 3);
+  assert.equal(difficultyState.after.length, 4);
+  assert.equal(difficultyState.length, 4);
+  assert.equal(difficultyState.phase, "showing");
+  assert.match(difficultyState.prompt, /四扇/);
+  assert.match(difficultyState.nextLabel, /五扇/);
+  await evaluate(sessionId, `new Promise((resolve, reject) => {
+    const started = Date.now();
+    function check() {
+      if (window.__ANDING_CARD__.getWaitWindowPhase() === 'input') return resolve();
+      if (Date.now() - started > 7000) return reject(new Error('harder window sequence did not finish playing'));
+      setTimeout(check, 40);
+    }
+    check();
+  })`);
+  const replayedWindow = JSON.parse(await evaluate(sessionId, `(() => {
+    const sequence = window.__ANDING_CARD__.getWaitSequence();
+    const buttons = Array.from(document.querySelectorAll('[data-action=wait-window]'));
+    sequence.forEach((index) => buttons[index].click());
+    const first = buttons[0].getBoundingClientRect();
+    return JSON.stringify({
+      sequence,
+      status: document.querySelector('#wait-activity-status').textContent,
+      phase: window.__ANDING_CARD__.getWaitWindowPhase(),
+      minWidth: first.width,
+      minHeight: first.height
+    });
+  })()`));
+  assert.equal(replayedWindow.sequence.length, 4);
+  assert.match(replayedWindow.status, /记住了/);
+  assert.equal(replayedWindow.phase, "rest");
+  assert.ok(replayedWindow.minWidth >= 100);
+  assert.ok(replayedWindow.minHeight >= 56);
 
   await evaluate(sessionId, "document.querySelector('[data-action=wait-switch]').click()");
   const fogState = JSON.parse(await evaluate(sessionId, `(() => {
     const board = document.querySelector('#wait-fog-board');
-    const canvas = document.querySelector('#wait-fog-canvas');
+    const cover = document.querySelector('#wait-fog-canvas');
+    const scene = document.querySelector('#wait-fog-scene');
     const bounds = board.getBoundingClientRect();
-    const x = bounds.left + bounds.width / 2;
-    const y = bounds.top + bounds.height / 2;
-    board.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', pointerId: 9, clientX: x, clientY: y }));
-    board.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'touch', pointerId: 9, clientX: x + 110, clientY: y + 8 }));
-    board.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'touch', pointerId: 9, clientX: x - 95, clientY: y + 20 }));
-    document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch', pointerId: 9, clientX: x - 95, clientY: y + 20 }));
-    const alpha = canvas.getContext('2d').getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1).data[3];
+    const colors = new Set();
+    const sceneContext = scene.getContext('2d');
+    for (let row = 1; row < 5; row += 1) {
+      for (let column = 1; column < 7; column += 1) {
+        const pixel = sceneContext.getImageData(
+          Math.floor(scene.width * column / 7),
+          Math.floor(scene.height * row / 5),
+          1,
+          1
+        ).data;
+        colors.add(Array.from(pixel).join(','));
+      }
+    }
+    const rows = [0.08, 0.25, 0.42, 0.59, 0.76, 0.92];
+    rows.forEach((portion, index) => {
+      const fromX = bounds.left + (index % 2 ? bounds.width - 8 : 8);
+      const toX = bounds.left + (index % 2 ? 8 : bounds.width - 8);
+      const y = bounds.top + bounds.height * portion;
+      board.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', pointerId: 20 + index, clientX: fromX, clientY: y }));
+      board.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'touch', pointerId: 20 + index, clientX: toX, clientY: y }));
+      document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch', pointerId: 20 + index, clientX: toX, clientY: y }));
+    });
+    const alpha = cover.getContext('2d').getImageData(Math.floor(cover.width / 2), Math.floor(cover.height / 2), 1, 1).data[3];
     return JSON.stringify({
       alpha,
-      display: getComputedStyle(canvas).display,
+      display: getComputedStyle(cover).display,
+      complete: cover.classList.contains('is-cleared'),
+      revealRatio: window.__ANDING_CARD__.getFogRevealRatio(),
+      sceneColors: colors.size,
       status: document.querySelector('#wait-activity-status').textContent,
       boardWidth: bounds.width,
       boardHeight: bounds.height
@@ -330,9 +413,29 @@ async function run() {
   })()`));
   assert.equal(fogState.alpha, 0);
   assert.equal(fogState.display, "block");
-  assert.match(fogState.status, /水纹|擦开/);
+  assert.equal(fogState.complete, true);
+  assert.ok(fogState.revealRatio >= 0.78);
+  assert.ok(fogState.sceneColors >= 6);
+  assert.match(fogState.status, /整幅图景/);
   assert.ok(fogState.boardWidth >= 280);
-  assert.ok(fogState.boardHeight >= 100);
+  assert.ok(fogState.boardHeight >= 170);
+
+  const newFog = JSON.parse(await evaluate(sessionId, `(() => {
+    const before = document.querySelector('#wait-fog-canvas').getAttribute('data-seed');
+    document.querySelector('[data-action=fog-new]').click();
+    const canvas = document.querySelector('#wait-fog-canvas');
+    const alpha = canvas.getContext('2d').getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1).data[3];
+    return JSON.stringify({
+      changed: before !== canvas.getAttribute('data-seed'),
+      alpha,
+      revealRatio: window.__ANDING_CARD__.getFogRevealRatio(),
+      status: document.querySelector('#wait-activity-status').textContent
+    });
+  })()`));
+  assert.equal(newFog.changed, true);
+  assert.equal(newFog.alpha, 255);
+  assert.equal(newFog.revealRatio, 0);
+  assert.match(newFog.status, /新的一幅/);
 
   await evaluate(sessionId, "document.querySelector('[data-action=wait-switch]').click()");
   assert.equal(await evaluate(sessionId, "document.querySelectorAll('[data-action=wait-window]').length"), 4);
@@ -378,8 +481,25 @@ async function run() {
     });
   })()`));
   assert.equal(compactWait.width, compactWait.viewport);
-  assert.ok(compactWait.contentGap >= 8);
-  assert.ok(compactWait.actionGap >= 8);
+  assert.ok(compactWait.contentGap >= 8, JSON.stringify(compactWait));
+  assert.ok(compactWait.actionGap >= 8, JSON.stringify(compactWait));
+  await evaluate(sessionId, "document.querySelector('[data-action=wait-switch]').click()");
+  const compactFog = JSON.parse(await evaluate(sessionId, `(() => {
+    const acknowledgement = document.querySelector('#wait-acknowledgement').getBoundingClientRect();
+    const primary = document.querySelector('.calm-actions .primary-button').getBoundingClientRect();
+    const board = document.querySelector('#wait-fog-board').getBoundingClientRect();
+    const secondary = document.querySelector('.wait-action-row').getBoundingClientRect();
+    const footer = document.querySelector('.boundary-footer').getBoundingClientRect();
+    return JSON.stringify({
+      contentGap: primary.top - acknowledgement.bottom,
+      actionGap: footer.top - secondary.bottom,
+      boardHeight: board.height
+    });
+  })()`));
+  assert.ok(compactFog.boardHeight >= 120, JSON.stringify(compactFog));
+  assert.ok(compactFog.contentGap >= 8, JSON.stringify(compactFog));
+  assert.ok(compactFog.actionGap >= 8, JSON.stringify(compactFog));
+  await evaluate(sessionId, "document.querySelector('[data-action=wait-switch]').click()");
   await send("Emulation.setDeviceMetricsOverride", {
     width: 390,
     height: 844,

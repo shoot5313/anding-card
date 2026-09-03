@@ -15,7 +15,9 @@
   var waitActivityTimer = null;
   var fogDrawing = false;
   var fogLastPoint = null;
-  var fogDistance = 0;
+  var fogVisited = {};
+  var fogComplete = false;
+  var fogKeyboardStep = 0;
   var cacheTimer = null;
   var navigating = false;
 
@@ -144,12 +146,34 @@
   ];
 
   var WAIT_WINDOW_POSITIONS = ["左上", "右上", "左下", "右下"];
+  var WAIT_WINDOW_MIN_LENGTH = 3;
+  var WAIT_WINDOW_MAX_LENGTH = 6;
+  var WAIT_WINDOW_COUNT_WORDS = { 3: "三", 4: "四", 5: "五", 6: "六" };
+  var FOG_BRUSH_RADIUS = 30;
+  var FOG_GRID_COLUMNS = 18;
+  var FOG_GRID_ROWS = 10;
 
   function randomWaitWindowTarget(exclude) {
     var choices = [0, 1, 2, 3].filter(function (index) {
       return index !== exclude;
     });
     return choices[Math.floor(Math.random() * choices.length)];
+  }
+
+  function createWaitWindowSequence(length) {
+    var sequence = [];
+    var previous = -1;
+    var count = Math.max(WAIT_WINDOW_MIN_LENGTH, Math.min(WAIT_WINDOW_MAX_LENGTH, length || WAIT_WINDOW_MIN_LENGTH));
+    while (sequence.length < count) {
+      var next = randomWaitWindowTarget(previous);
+      sequence.push(next);
+      previous = next;
+    }
+    return sequence;
+  }
+
+  function randomFogSeed() {
+    return Math.floor(Math.random() * 2147483000) + 1;
   }
 
   var state = {
@@ -169,8 +193,13 @@
     waitSupportIndex: -1,
     supportWordIndex: 0,
     waitActivity: "windows",
-    waitWindowTarget: randomWaitWindowTarget(-1),
+    waitWindowLength: WAIT_WINDOW_MIN_LENGTH,
+    waitWindowSequence: createWaitWindowSequence(WAIT_WINDOW_MIN_LENGTH),
+    waitWindowInput: [],
+    waitWindowPhase: "showing",
+    waitWindowShowIndex: -1,
     waitWindowRound: 0,
+    waitFogSeed: randomFogSeed(),
     learnLayer: "",
     practiceStep: 0,
     practiceFocus: "",
@@ -331,7 +360,6 @@
     }
     fogDrawing = false;
     fogLastPoint = null;
-    fogDistance = 0;
   }
 
   function setAppHeight() {
@@ -849,16 +877,22 @@
     return String(minutes).padStart(2, "0") + ":" + String(remainder).padStart(2, "0");
   }
 
+  function waitWindowCountWord(count) {
+    return WAIT_WINDOW_COUNT_WORDS[count] || String(count);
+  }
+
+  function waitWindowDifficultyLabel() {
+    if (state.waitWindowLength >= WAIT_WINDOW_MAX_LENGTH) return "回到三扇 ↺";
+    return "难一点 · " + waitWindowCountWord(state.waitWindowLength + 1) + "扇";
+  }
+
   function renderWaitWindows() {
     var windows = WAIT_WINDOW_POSITIONS.map(function (position, index) {
-      var isLit = index === state.waitWindowTarget;
       return [
-        '<button class="wait-window',
-        isLit ? " is-lit" : "",
-        '" type="button" data-action="wait-window" data-window="',
+        '<button class="wait-window" type="button" data-action="wait-window" data-window="',
         String(index),
-        '" aria-label="',
-        escapeHtml(position + "方的窗" + (isLit ? "，现在亮着" : "")),
+        '" disabled aria-label="',
+        escapeHtml(position + "方的窗"),
         '">',
         '<span class="wait-window__pane" aria-hidden="true"><span></span></span>',
         "</button>",
@@ -866,9 +900,19 @@
     }).join("");
     return [
       '<div class="wait-activity wait-windows" id="wait-activity">',
-      '<p class="wait-activity__prompt">看哪一扇窗慢慢亮起来，点那一整格。</p>',
+      '<p class="wait-activity__prompt" id="wait-window-prompt">先记住',
+      waitWindowCountWord(state.waitWindowLength),
+      '扇窗亮起的顺序，再照着点。</p>',
       '<div class="wait-window-grid" id="wait-window-grid">', windows, "</div>",
-      '<p class="wait-activity__status" id="wait-activity-status" aria-live="polite">不用抢。亮着的那扇会等你。</p>',
+      '<div class="wait-activity__footer">',
+      '<p class="wait-activity__status" id="wait-activity-status" aria-live="polite">先看，一扇一扇来。</p>',
+      '<div class="wait-memory-controls">',
+      '<button class="quiet-link wait-replay" type="button" data-action="wait-replay" disabled>再看一遍&nbsp;↻</button>',
+      '<button class="quiet-link wait-difficulty" type="button" data-action="wait-difficulty" disabled>',
+      waitWindowDifficultyLabel(),
+      "</button>",
+      "</div>",
+      "</div>",
       "</div>",
     ].join("");
   }
@@ -876,16 +920,15 @@
   function renderWaitFog() {
     return [
       '<div class="wait-activity wait-fog" id="wait-activity">',
-      '<p class="wait-activity__prompt">手指放在哪里都可以，慢慢擦开一小片。</p>',
-      '<button class="fog-board" id="wait-fog-board" type="button" data-action="fog-reveal" aria-describedby="wait-activity-status" aria-label="擦开雾气。按住并移动手指，或按空格擦开中间一片">',
-      '<span class="fog-scene" aria-hidden="true">',
-      '<span class="fog-horizon"></span>',
-      '<span class="fog-ripple fog-ripple--one"></span>',
-      '<span class="fog-ripple fog-ripple--two"></span>',
-      "</span>",
+      '<p class="wait-activity__prompt">慢慢移动手指，把雾后的整幅图景擦出来。</p>',
+      '<button class="fog-board" id="wait-fog-board" type="button" data-action="fog-reveal" aria-describedby="wait-activity-status" aria-label="擦开雾气。按住并移动手指探索整幅图景，或用空格分段擦开">',
+      '<canvas id="wait-fog-scene" aria-hidden="true"></canvas>',
       '<canvas id="wait-fog-canvas" aria-hidden="true"></canvas>',
       "</button>",
-      '<p class="wait-activity__status" id="wait-activity-status" aria-live="polite">不用擦完整。手指走过的地方会留下来。</p>',
+      '<div class="wait-activity__footer">',
+      '<p class="wait-activity__status" id="wait-activity-status" aria-live="polite">从哪里开始都可以。下面藏着不止一种花纹。</p>',
+      '<button class="quiet-link fog-new" type="button" data-action="fog-new">换一幅&nbsp;↻</button>',
+      "</div>",
       "</div>",
     ].join("");
   }
@@ -924,7 +967,7 @@
       "</div>",
     ].join("");
     return calmScreen("让时间过去", body, "它退了", "wait-done", "", secondary)
-      .replace("screen screen-calm", "screen screen-calm screen-wait");
+      .replace("screen screen-calm", "screen screen-calm screen-wait screen-wait--" + state.waitActivity);
   }
 
   function waitSupportMessages() {
@@ -1322,121 +1365,368 @@
       initializeWaitFog();
       return;
     }
-    if (state.waitWindowTarget < 0) state.waitWindowTarget = randomWaitWindowTarget(-1);
-    updateWaitWindows();
+    startWaitWindowPlayback(true);
   }
 
-  function updateWaitWindows() {
+  function setWaitActivityStatus(message) {
+    var status = document.getElementById("wait-activity-status");
+    if (status) status.textContent = message;
+  }
+
+  function updateWaitWindows(receivedIndex) {
     var buttons = document.querySelectorAll('[data-action="wait-window"]');
     Array.prototype.forEach.call(buttons, function (button) {
       var index = Number(button.getAttribute("data-window"));
-      var isLit = index === state.waitWindowTarget;
+      var isLit = state.waitWindowPhase === "showing" && index === state.waitWindowShowIndex;
       button.classList.toggle("is-lit", isLit);
       button.classList.remove("is-received");
-      button.setAttribute("aria-label", WAIT_WINDOW_POSITIONS[index] + "方的窗" + (isLit ? "，现在亮着" : ""));
+      if (index === receivedIndex) restartClassAnimation(button, "is-received");
+      button.disabled = state.waitWindowPhase !== "input";
+      button.setAttribute("aria-label", WAIT_WINDOW_POSITIONS[index] + "方的窗" + (isLit ? "，正在亮" : ""));
     });
+    var replay = document.querySelector('[data-action="wait-replay"]');
+    if (replay) replay.disabled = state.waitWindowPhase === "showing";
+    var difficulty = document.querySelector('[data-action="wait-difficulty"]');
+    if (difficulty) {
+      difficulty.disabled = state.waitWindowPhase === "showing";
+      difficulty.textContent = waitWindowDifficultyLabel();
+      difficulty.setAttribute("aria-label", state.waitWindowLength >= WAIT_WINDOW_MAX_LENGTH
+        ? "把亮窗顺序恢复为三扇"
+        : "把亮窗顺序增加到" + waitWindowCountWord(state.waitWindowLength + 1) + "扇");
+    }
+    var prompt = document.getElementById("wait-window-prompt");
+    if (prompt) prompt.textContent = "先记住" + waitWindowCountWord(state.waitWindowLength) + "扇窗亮起的顺序，再照着点。";
+  }
+
+  function startWaitWindowPlayback(keepSequence) {
+    if (waitActivityTimer) window.clearTimeout(waitActivityTimer);
+    if (!keepSequence || !state.waitWindowSequence.length) {
+      state.waitWindowSequence = createWaitWindowSequence(state.waitWindowLength);
+    }
+    state.waitWindowInput = [];
+    state.waitWindowPhase = "showing";
+    state.waitWindowShowIndex = -1;
+    updateWaitWindows();
+    setWaitActivityStatus("先看，一扇一扇来。");
+
+    var cursor = 0;
+    function showNextWindow() {
+      if (state.route !== "wait" || state.waitActivity !== "windows") return;
+      if (cursor >= state.waitWindowSequence.length) {
+        state.waitWindowPhase = "input";
+        state.waitWindowShowIndex = -1;
+        updateWaitWindows();
+        setWaitActivityStatus("轮到你了。");
+        waitActivityTimer = null;
+        return;
+      }
+      state.waitWindowShowIndex = state.waitWindowSequence[cursor];
+      updateWaitWindows();
+      waitActivityTimer = window.setTimeout(function () {
+        state.waitWindowShowIndex = -1;
+        updateWaitWindows();
+        cursor += 1;
+        waitActivityTimer = window.setTimeout(showNextWindow, 280);
+      }, 680);
+    }
+
+    waitActivityTimer = window.setTimeout(showNextWindow, 380);
   }
 
   function chooseWaitWindow(control) {
-    if (state.route !== "wait" || state.waitActivity !== "windows" || state.waitWindowTarget < 0) return;
+    if (state.route !== "wait" || state.waitActivity !== "windows" || state.waitWindowPhase !== "input") return;
     var chosen = Number(control.getAttribute("data-window"));
-    var status = document.getElementById("wait-activity-status");
-    if (chosen !== state.waitWindowTarget) {
-      if (status) status.textContent = "再看一眼。亮着的那扇还在等你。";
+    var expected = state.waitWindowSequence[state.waitWindowInput.length];
+
+    if (chosen !== expected) {
+      state.waitWindowPhase = "rest";
+      updateWaitWindows(chosen);
+      setWaitActivityStatus("没关系，忘了很正常。再看一遍。");
+      if (waitActivityTimer) window.clearTimeout(waitActivityTimer);
+      waitActivityTimer = window.setTimeout(function () {
+        startWaitWindowPlayback(true);
+      }, 760);
       return;
     }
 
-    var previous = state.waitWindowTarget;
-    var receivedMessages = [
-      "接住了。下一扇会自己亮起来。",
-      "看见了。再等一扇慢慢亮起来。",
-      "就在这里。下一扇不着急。",
-    ];
+    state.waitWindowInput.push(chosen);
+    updateWaitWindows(chosen);
+    if (state.waitWindowInput.length < state.waitWindowSequence.length) {
+      setWaitActivityStatus("接住了，继续。");
+      return;
+    }
+
     state.waitWindowRound += 1;
-    state.waitWindowTarget = -1;
-    control.classList.remove("is-lit");
-    control.classList.add("is-received");
-    if (status) status.textContent = receivedMessages[(state.waitWindowRound - 1) % receivedMessages.length];
+    state.waitWindowPhase = "rest";
+    updateWaitWindows(chosen);
+    setWaitActivityStatus("记住了。下一组仍是" + waitWindowCountWord(state.waitWindowLength) + "扇。");
     if (waitActivityTimer) window.clearTimeout(waitActivityTimer);
     waitActivityTimer = window.setTimeout(function () {
-      waitActivityTimer = null;
-      if (state.route !== "wait" || state.waitActivity !== "windows") return;
-      state.waitWindowTarget = randomWaitWindowTarget(previous);
-      updateWaitWindows();
-    }, 680);
+      state.waitWindowSequence = createWaitWindowSequence(state.waitWindowLength);
+      startWaitWindowPlayback(true);
+    }, 900);
   }
 
-  function initializeWaitFog() {
-    var canvas = document.getElementById("wait-fog-canvas");
-    var board = document.getElementById("wait-fog-board");
-    if (!canvas || !board) return;
-    var width = Math.max(1, Math.round(board.clientWidth));
-    var height = Math.max(1, Math.round(board.clientHeight));
-    var scale = Math.min(window.devicePixelRatio || 1, 2);
+  function changeWaitWindowDifficulty() {
+    if (state.route !== "wait" || state.waitActivity !== "windows" || state.waitWindowPhase === "showing") return;
+    state.waitWindowLength = state.waitWindowLength >= WAIT_WINDOW_MAX_LENGTH
+      ? WAIT_WINDOW_MIN_LENGTH
+      : state.waitWindowLength + 1;
+    state.waitWindowSequence = createWaitWindowSequence(state.waitWindowLength);
+    startWaitWindowPlayback(true);
+  }
+
+  function seededFogRandom(seed) {
+    var value = seed % 2147483647;
+    if (value <= 0) value += 2147483646;
+    return function () {
+      value = value * 48271 % 2147483647;
+      return (value - 1) / 2147483646;
+    };
+  }
+
+  function sizeFogCanvas(canvas, width, height, scale) {
     canvas.width = Math.round(width * scale);
     canvas.height = Math.round(height * scale);
     canvas.style.width = width + "px";
     canvas.style.height = height + "px";
+  }
+
+  function drawFogScene(canvas, width, height, scale, seed) {
     var context = canvas.getContext("2d");
     if (!context) return;
+    var random = seededFogRandom(seed);
+    var palettes = [
+      { top: "#344346", bottom: "#172529", hill: "#223438", line: "rgba(200,216,207,0.34)", soft: "rgba(137,171,162,0.22)" },
+      { top: "#3b3d3a", bottom: "#20282a", hill: "#2b3331", line: "rgba(220,213,194,0.31)", soft: "rgba(157,174,163,0.20)" },
+      { top: "#303c45", bottom: "#1b252d", hill: "#25343d", line: "rgba(200,214,217,0.32)", soft: "rgba(132,164,166,0.22)" },
+    ];
+    var palette = palettes[seed % palettes.length];
     context.setTransform(scale, 0, 0, scale, 0, 0);
-    var mist = context.createLinearGradient(0, 0, width, height);
-    mist.addColorStop(0, "#303537");
-    mist.addColorStop(0.52, "#252a2c");
-    mist.addColorStop(1, "#343533");
-    context.fillStyle = mist;
+
+    var background = context.createLinearGradient(0, 0, width, height);
+    background.addColorStop(0, palette.top);
+    background.addColorStop(1, palette.bottom);
+    context.fillStyle = background;
     context.fillRect(0, 0, width, height);
-    for (var index = 0; index < 18; index += 1) {
-      context.fillStyle = index % 2 === 0 ? "rgba(235,230,219,0.025)" : "rgba(130,154,145,0.025)";
+
+    var glowX = width * (0.18 + random() * 0.64);
+    var glowY = height * (0.1 + random() * 0.22);
+    var glow = context.createRadialGradient(glowX, glowY, 2, glowX, glowY, width * 0.34);
+    glow.addColorStop(0, "rgba(230,226,207,0.22)");
+    glow.addColorStop(1, "rgba(230,226,207,0)");
+    context.fillStyle = glow;
+    context.fillRect(0, 0, width, height);
+
+    context.fillStyle = palette.hill;
+    context.beginPath();
+    context.moveTo(0, height * 0.7);
+    context.bezierCurveTo(width * 0.18, height * (0.47 + random() * 0.1), width * 0.32, height * 0.78, width * 0.52, height * 0.61);
+    context.bezierCurveTo(width * 0.7, height * (0.45 + random() * 0.1), width * 0.82, height * 0.72, width, height * 0.5);
+    context.lineTo(width, height);
+    context.lineTo(0, height);
+    context.closePath();
+    context.fill();
+
+    context.strokeStyle = palette.line;
+    context.lineWidth = 1;
+    for (var contour = 0; contour < 7; contour += 1) {
+      var contourY = height * (0.42 + contour * 0.075);
       context.beginPath();
-      context.arc((index * 53 + 19) % width, (index * 31 + 17) % height, 1 + index % 3, 0, Math.PI * 2);
+      context.moveTo(-20, contourY + random() * 8);
+      context.bezierCurveTo(width * 0.22, contourY - 18 + random() * 18, width * 0.42, contourY + 20 - random() * 12, width * 0.62, contourY - 4);
+      context.bezierCurveTo(width * 0.78, contourY - 15 + random() * 18, width * 0.9, contourY + 10, width + 20, contourY - 6 + random() * 12);
+      context.stroke();
+    }
+
+    context.strokeStyle = palette.soft;
+    context.lineWidth = 1.2;
+    for (var rain = 0; rain < 24; rain += 1) {
+      var rainX = width * (0.03 + random() * 0.46);
+      var rainY = height * (0.05 + random() * 0.34);
+      var rainLength = 5 + random() * 12;
+      context.beginPath();
+      context.moveTo(rainX, rainY);
+      context.lineTo(rainX - 2.5, rainY + rainLength);
+      context.stroke();
+    }
+
+    var stemX = width * (0.72 + random() * 0.15);
+    context.strokeStyle = palette.line;
+    context.beginPath();
+    context.moveTo(stemX, height * 0.9);
+    context.quadraticCurveTo(stemX - width * 0.04, height * 0.53, stemX + width * 0.02, height * 0.18);
+    context.stroke();
+    for (var leaf = 0; leaf < 7; leaf += 1) {
+      var leafY = height * (0.76 - leaf * 0.075);
+      var side = leaf % 2 === 0 ? -1 : 1;
+      var leafX = stemX + side * width * (0.018 + random() * 0.018);
+      var leafWidth = width * (0.045 + random() * 0.025);
+      var leafHeight = height * (0.028 + random() * 0.025);
+      context.fillStyle = palette.soft;
+      context.beginPath();
+      context.moveTo(leafX, leafY);
+      context.quadraticCurveTo(leafX + side * leafWidth * 0.62, leafY - leafHeight, leafX + side * leafWidth, leafY - leafHeight * 0.08);
+      context.quadraticCurveTo(leafX + side * leafWidth * 0.48, leafY + leafHeight * 0.55, leafX, leafY);
       context.fill();
     }
+
+    context.strokeStyle = palette.line;
+    for (var ripple = 0; ripple < 5; ripple += 1) {
+      context.beginPath();
+      context.ellipse(width * (0.17 + random() * 0.18), height * (0.76 + random() * 0.14), width * (0.06 + ripple * 0.025), height * (0.015 + ripple * 0.006), -0.08, 0, Math.PI * 2);
+      context.stroke();
+    }
+
+    for (var pebble = 0; pebble < 20; pebble += 1) {
+      var pebbleX = width * (0.4 + random() * 0.56);
+      var pebbleY = height * (0.72 + random() * 0.23);
+      var pebbleRadius = 1.2 + random() * 3.2;
+      context.fillStyle = pebble % 3 === 0 ? palette.line : palette.soft;
+      context.beginPath();
+      context.arc(pebbleX, pebbleY, pebbleRadius, 0, Math.PI * 2);
+      context.fill();
+    }
+
+    context.strokeStyle = "rgba(235,230,219,0.18)";
+    for (var arc = 0; arc < 4; arc += 1) {
+      context.beginPath();
+      context.arc(width * (0.58 + random() * 0.18), height * (0.19 + random() * 0.2), 8 + arc * 7, Math.PI * (0.15 + random() * 0.25), Math.PI * (1.1 + random() * 0.35));
+      context.stroke();
+    }
+  }
+
+  function drawFogCover(canvas, width, height, scale, seed) {
+    var context = canvas.getContext("2d");
+    if (!context) return;
+    var random = seededFogRandom(seed + 937);
+    context.setTransform(scale, 0, 0, scale, 0, 0);
+    var mist = context.createLinearGradient(0, 0, width, height);
+    mist.addColorStop(0, "#353a3b");
+    mist.addColorStop(0.5, "#272d2f");
+    mist.addColorStop(1, "#3a3b38");
+    context.fillStyle = mist;
+    context.fillRect(0, 0, width, height);
+    for (var index = 0; index < 38; index += 1) {
+      context.fillStyle = index % 2 === 0 ? "rgba(235,230,219,0.025)" : "rgba(130,154,145,0.03)";
+      context.beginPath();
+      context.arc(random() * width, random() * height, 1 + random() * 3.5, 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+
+  function initializeWaitFog(force) {
+    var canvas = document.getElementById("wait-fog-canvas");
+    var scene = document.getElementById("wait-fog-scene");
+    var board = document.getElementById("wait-fog-board");
+    if (!canvas || !scene || !board) return;
+    if (!force && canvas.getAttribute("data-seed") === String(state.waitFogSeed) && canvas.width > 0) return;
+    var width = Math.max(1, Math.round(board.clientWidth));
+    var height = Math.max(1, Math.round(board.clientHeight));
+    var scale = Math.min(window.devicePixelRatio || 1, 2);
+    sizeFogCanvas(scene, width, height, scale);
+    sizeFogCanvas(canvas, width, height, scale);
+    drawFogScene(scene, width, height, scale, state.waitFogSeed);
+    drawFogCover(canvas, width, height, scale, state.waitFogSeed);
+    canvas.setAttribute("data-seed", String(state.waitFogSeed));
+    canvas.classList.remove("is-cleared");
+    board.classList.remove("is-complete");
+    board.setAttribute("aria-label", "擦开雾气。按住并移动手指探索整幅图景，或用空格分段擦开");
     fogDrawing = false;
     fogLastPoint = null;
-    fogDistance = 0;
+    fogVisited = {};
+    fogComplete = false;
+    fogKeyboardStep = 0;
   }
 
   function waitFogPoint(event, board) {
     var source = event.touches && event.touches[0] ? event.touches[0] : event;
     if (typeof source.clientX !== "number" || typeof source.clientY !== "number") return null;
     var bounds = board.getBoundingClientRect();
-    return { x: source.clientX - bounds.left, y: source.clientY - bounds.top };
+    return {
+      x: Math.max(0, Math.min(bounds.width, source.clientX - bounds.left)),
+      y: Math.max(0, Math.min(bounds.height, source.clientY - bounds.top)),
+    };
+  }
+
+  function markFogVisited(point, previous, width, height) {
+    var start = previous || point;
+    var deltaX = point.x - start.x;
+    var deltaY = point.y - start.y;
+    var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    var steps = Math.max(1, Math.ceil(distance / (FOG_BRUSH_RADIUS * 0.4)));
+    var cellWidth = width / FOG_GRID_COLUMNS;
+    var cellHeight = height / FOG_GRID_ROWS;
+    for (var step = 0; step <= steps; step += 1) {
+      var progress = step / steps;
+      var sampleX = start.x + deltaX * progress;
+      var sampleY = start.y + deltaY * progress;
+      for (var row = 0; row < FOG_GRID_ROWS; row += 1) {
+        for (var column = 0; column < FOG_GRID_COLUMNS; column += 1) {
+          var centerX = (column + 0.5) * cellWidth;
+          var centerY = (row + 0.5) * cellHeight;
+          var xDistance = centerX - sampleX;
+          var yDistance = centerY - sampleY;
+          if (xDistance * xDistance + yDistance * yDistance <= FOG_BRUSH_RADIUS * FOG_BRUSH_RADIUS) {
+            fogVisited[row + ":" + column] = true;
+          }
+        }
+      }
+    }
+    return Object.keys(fogVisited).length / (FOG_GRID_COLUMNS * FOG_GRID_ROWS);
+  }
+
+  function completeWaitFog() {
+    if (fogComplete) return;
+    fogComplete = true;
+    fogDrawing = false;
+    fogLastPoint = null;
+    var canvas = document.getElementById("wait-fog-canvas");
+    var board = document.getElementById("wait-fog-board");
+    if (canvas) canvas.classList.add("is-cleared");
+    if (board) {
+      board.classList.add("is-complete");
+      board.setAttribute("aria-label", "整幅图景已经露出来了。可以选择换一幅");
+    }
+    setWaitActivityStatus("整幅图景露出来了。想再探索，可以换一幅。");
+    if (waitActivityTimer) window.clearTimeout(waitActivityTimer);
+    waitActivityTimer = window.setTimeout(function () {
+      waitActivityTimer = null;
+      if (!canvas || !fogComplete) return;
+      var context = canvas.getContext("2d");
+      if (context) context.clearRect(0, 0, canvas.width, canvas.height);
+    }, 650);
   }
 
   function clearWaitFog(point, previous) {
     var canvas = document.getElementById("wait-fog-canvas");
-    if (!canvas || !point) return;
+    var board = document.getElementById("wait-fog-board");
+    if (!canvas || !board || !point || fogComplete) return;
     var context = canvas.getContext("2d");
     if (!context) return;
     context.save();
     context.globalCompositeOperation = "destination-out";
     context.lineCap = "round";
     context.lineJoin = "round";
-    context.lineWidth = 96;
+    context.lineWidth = FOG_BRUSH_RADIUS * 2;
     context.beginPath();
     if (previous) context.moveTo(previous.x, previous.y);
     else context.moveTo(point.x, point.y);
     context.lineTo(point.x, point.y);
     context.stroke();
     context.beginPath();
-    context.arc(point.x, point.y, 48, 0, Math.PI * 2);
+    context.arc(point.x, point.y, FOG_BRUSH_RADIUS, 0, Math.PI * 2);
     context.fill();
     context.restore();
 
-    if (previous) {
-      fogDistance += Math.sqrt(Math.pow(point.x - previous.x, 2) + Math.pow(point.y - previous.y, 2));
-    } else {
-      fogDistance += 48;
-    }
-    var status = document.getElementById("wait-activity-status");
-    if (!status) return;
-    if (fogDistance > 520) status.textContent = "已经擦开一片了。还想继续，就慢慢继续。";
-    else if (fogDistance > 170) status.textContent = "下面的水纹露出来了。手指可以走得很慢。";
+    var revealed = markFogVisited(point, previous, board.clientWidth, board.clientHeight);
+    if (revealed >= 0.78) completeWaitFog();
+    else if (revealed >= 0.48) setWaitActivityStatus("已经露出很大一片了。可以去找还蒙着的地方。");
+    else if (revealed >= 0.18) setWaitActivityStatus("下面不只有一种花纹。换个方向看看。");
   }
 
   function beginWaitFog(event, board) {
-    if (state.route !== "wait" || state.waitActivity !== "fog") return;
+    if (state.route !== "wait" || state.waitActivity !== "fog" || fogComplete) return;
     if (event.cancelable) event.preventDefault();
     fogDrawing = true;
     fogLastPoint = null;
@@ -1468,9 +1758,26 @@
 
   function revealFogForKeyboard() {
     var board = document.getElementById("wait-fog-board");
-    if (!board) return;
-    var center = { x: board.clientWidth / 2, y: board.clientHeight / 2 };
-    clearWaitFog(center, { x: center.x - 70, y: center.y + 18 });
+    if (!board || fogComplete) return;
+    var rows = [0.16, 0.38, 0.62, 0.84];
+    var row = fogKeyboardStep % rows.length;
+    var reverse = Math.floor(fogKeyboardStep / rows.length) % 2 === 1;
+    var start = { x: board.clientWidth * (reverse ? 0.88 : 0.12), y: board.clientHeight * rows[row] };
+    var end = { x: board.clientWidth * (reverse ? 0.12 : 0.88), y: board.clientHeight * rows[row] };
+    fogKeyboardStep += 1;
+    clearWaitFog(end, start);
+  }
+
+  function showNewFogScene() {
+    if (waitActivityTimer) {
+      window.clearTimeout(waitActivityTimer);
+      waitActivityTimer = null;
+    }
+    var previous = state.waitFogSeed;
+    state.waitFogSeed = randomFogSeed();
+    if (state.waitFogSeed === previous) state.waitFogSeed += 1;
+    initializeWaitFog(true);
+    setWaitActivityStatus("新的一幅藏好了。从哪里开始都可以。");
   }
 
   function updateGroundingStep() {
@@ -1885,8 +2192,13 @@
     state.waitSupportIndex = -1;
     state.supportWordIndex = 0;
     state.waitActivity = "windows";
-    state.waitWindowTarget = randomWaitWindowTarget(-1);
+    state.waitWindowLength = WAIT_WINDOW_MIN_LENGTH;
+    state.waitWindowSequence = createWaitWindowSequence(state.waitWindowLength);
+    state.waitWindowInput = [];
+    state.waitWindowPhase = "showing";
+    state.waitWindowShowIndex = -1;
     state.waitWindowRound = 0;
+    state.waitFogSeed = randomFogSeed();
   }
 
   app.addEventListener("click", function (event) {
@@ -2005,14 +2317,23 @@
       }
     } else if (action === "wait-window") {
       chooseWaitWindow(control);
+    } else if (action === "wait-replay") {
+      startWaitWindowPlayback(true);
+    } else if (action === "wait-difficulty") {
+      changeWaitWindowDifficulty();
     } else if (action === "wait-switch") {
       state.waitActivity = state.waitActivity === "windows" ? "fog" : "windows";
       if (state.waitActivity === "windows") {
-        state.waitWindowTarget = randomWaitWindowTarget(state.waitWindowTarget);
+        state.waitWindowSequence = createWaitWindowSequence(state.waitWindowLength);
+        state.waitWindowInput = [];
+        state.waitWindowPhase = "showing";
+        state.waitWindowShowIndex = -1;
       }
       navigate("wait", true);
     } else if (action === "fog-reveal") {
       if (event.detail === 0) revealFogForKeyboard();
+    } else if (action === "fog-new") {
+      showNewFogScene();
     } else if (action === "wait-more") {
       state.waitAcknowledged = true;
       state.waitSupportIndex += 1;
@@ -2126,6 +2447,10 @@
     getNeed: function () { return state.need; },
     getGroundIndex: function () { return state.groundIndex; },
     getGroundCount: function () { return state.groundSteps.length; },
+    getWaitSequence: function () { return state.waitWindowSequence.slice(); },
+    getWaitWindowLength: function () { return state.waitWindowLength; },
+    getWaitWindowPhase: function () { return state.waitWindowPhase; },
+    getFogRevealRatio: function () { return Object.keys(fogVisited).length / (FOG_GRID_COLUMNS * FOG_GRID_ROWS); },
     getCardSize: function () { return { width: CARD_WIDTH, height: CARD_HEIGHT }; },
     getWaitMessage: waitMessageFor,
     generateCard: function () {
