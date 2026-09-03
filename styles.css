@@ -183,11 +183,33 @@ textarea:focus {
 
 .flow-nav,
 .page-nav {
-  display: flex;
   flex: 0 0 auto;
   align-items: center;
+  min-height: 44px;
+}
+
+.page-nav {
+  display: flex;
   justify-content: space-between;
-  min-height: 38px;
+}
+
+.flow-nav {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) 92px;
+  gap: 7px;
+}
+
+.page-nav--with-exit {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.page-nav--with-exit .eyebrow {
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .flow-nav__mark,
@@ -235,8 +257,36 @@ textarea:focus {
 }
 
 .flow-nav .quiet-link {
-  max-width: 180px;
+  max-width: none;
+  padding-right: 8px;
+  padding-left: 8px;
   font-size: 12px;
+}
+
+.flow-nav__exit,
+.page-exit {
+  border-radius: 10px;
+  background: rgba(19, 40, 35, 0.52);
+  color: var(--paper-dim);
+}
+
+.flow-nav__exit {
+  justify-self: start;
+}
+
+.flow-nav__exit::before,
+.page-exit::before {
+  margin-right: 5px;
+  content: "←";
+}
+
+.flow-nav__words {
+  justify-self: end;
+}
+
+.flow-nav__mark {
+  line-height: 1.35;
+  text-align: center;
 }
 
 .calm-actions > .quiet-link {
@@ -3075,18 +3125,6 @@ textarea:focus {
   letter-spacing: 0.22em;
 }
 
-.grounding-context {
-  max-width: 420px;
-  margin: -10px 0 0;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: var(--bluebell-soft);
-  color: #c1cce9;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.55;
-}
-
 .grounding-prompt {
   width: 100%;
   max-width: 440px;
@@ -3094,6 +3132,56 @@ textarea:focus {
   font-family: "Songti SC", "STSong", "SimSun", serif;
   font-size: 27px;
   line-height: 1.75;
+}
+
+.grounding-round-finish {
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+}
+
+.grounding-round-finish__trail {
+  display: flex;
+  width: 222px;
+  height: 70px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 25px;
+  border-top: 1px solid rgba(190, 211, 200, 0.2);
+  border-bottom: 1px solid rgba(190, 211, 200, 0.2);
+}
+
+.grounding-round-finish__trail i {
+  display: block;
+  width: 19px;
+  height: 19px;
+  border: 1px solid rgba(242, 235, 221, 0.34);
+  border-radius: 50%;
+  background: var(--sea-glass);
+}
+
+.grounding-round-finish__trail i + i {
+  margin-left: 10px;
+}
+
+.grounding-round-finish__trail .is-touch {
+  border-radius: 6px 11px 7px 10px;
+  background: var(--bluebell);
+  transform: rotate(9deg);
+}
+
+.grounding-round-finish__trail .is-hear {
+  border-radius: 50% 50% 50% 8px;
+  background: #d4bc78;
+  transform: rotate(-20deg);
+}
+
+.grounding-round-finish .display-title {
+  margin: 0;
+}
+
+.grounding-round-finish .support-copy {
+  margin: 14px auto 0;
 }
 
 .grounding-answer-wrap {
@@ -4078,15 +4166,15 @@ canvas {
   }
 
   .screen-wait .wait-acknowledgement {
-    min-height: 30px;
+    min-height: 22px;
   }
 
   .screen-wait .screen-calm__body > * + * {
-    margin-top: 6px;
+    margin-top: 3px;
   }
 
   .screen-wait--fog .screen-calm__body > * + * {
-    margin-top: 4px;
+    margin-top: 1px;
   }
 
   .practice-mode-header {

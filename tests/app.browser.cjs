@@ -182,6 +182,70 @@ async function run() {
   await evaluate(sessionId, "document.querySelector('[data-action=start]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "checkin");
   assert.equal(await evaluate(sessionId, "document.querySelectorAll('[data-action=choose-need]').length"), 5);
+  const checkinExit = JSON.parse(await evaluate(sessionId, `(() => {
+    const button = document.querySelector('[data-action=emergency-exit]');
+    return JSON.stringify({
+      exists: Boolean(button),
+      text: button ? button.textContent : '',
+      height: button ? button.getBoundingClientRect().height : 0
+    });
+  })()`));
+  assert.equal(checkinExit.exists, true, "the distress entry must have a visible exit");
+  assert.match(checkinExit.text, /退出|回到首页/);
+  assert.ok(checkinExit.height >= 44);
+  await evaluate(sessionId, "document.querySelector('[data-action=emergency-exit]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "home");
+  await send("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
+  }, sessionId);
+  await evaluate(sessionId, "document.querySelector('[data-action=start]').click()");
+  await evaluate(sessionId, "new Promise((resolve) => setTimeout(resolve, 340))");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "checkin");
+  await evaluate(sessionId, "document.querySelector('[data-action=emergency-exit]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "home", "exit must work while the previous screen is still fading in");
+  assert.equal(await evaluate(sessionId, "document.querySelector('#app').classList.contains('is-fading')"), false);
+  await send("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+  }, sessionId);
+  await evaluate(sessionId, "document.querySelector('[data-action=start]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "checkin");
+  await send("Emulation.setDeviceMetricsOverride", {
+    width: 320,
+    height: 568,
+    deviceScaleFactor: 2,
+    mobile: true,
+    screenWidth: 320,
+    screenHeight: 568,
+  }, sessionId);
+  await evaluate(sessionId, "new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+  const narrowCheckin = JSON.parse(await evaluate(sessionId, `(() => {
+    const exit = document.querySelector('[data-action=emergency-exit]').getBoundingClientRect();
+    const words = document.querySelector('[data-action=words]').getBoundingClientRect();
+    const shortcuts = document.querySelector('.choice-shortcuts').getBoundingClientRect();
+    const footer = document.querySelector('.boundary-footer').getBoundingClientRect();
+    return JSON.stringify({
+      width: document.documentElement.scrollWidth,
+      viewport: innerWidth,
+      exitHeight: exit.height,
+      wordsHeight: words.height,
+      navFits: exit.left >= 0 && words.right <= innerWidth,
+      contentFits: shortcuts.bottom < footer.top
+    });
+  })()`));
+  assert.equal(narrowCheckin.width, narrowCheckin.viewport);
+  assert.ok(narrowCheckin.exitHeight >= 44);
+  assert.ok(narrowCheckin.wordsHeight >= 44);
+  assert.equal(narrowCheckin.navFits, true);
+  assert.equal(narrowCheckin.contentFits, true);
+  await send("Emulation.setDeviceMetricsOverride", {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 2,
+    mobile: true,
+    screenWidth: 390,
+    screenHeight: 844,
+  }, sessionId);
+  await evaluate(sessionId, "new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
   const gameShortcut = JSON.parse(await evaluate(sessionId, `(() => {
     const button = document.querySelector('[data-action=start-game]');
     const shortcuts = document.querySelector('.choice-shortcuts').getBoundingClientRect();
@@ -199,6 +263,12 @@ async function run() {
   assert.ok(gameShortcut.height >= 58);
   assert.equal(gameShortcut.fits, true);
   assert.equal(gameShortcut.width, gameShortcut.viewport);
+  await evaluate(sessionId, "document.querySelector('[data-action=start-game]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "games");
+  assert.equal(await evaluate(sessionId, "Boolean(document.querySelector('[data-action=emergency-exit]'))"), true);
+  await evaluate(sessionId, "document.querySelector('[data-action=emergency-exit]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "home");
+  await evaluate(sessionId, "document.querySelector('[data-action=start]').click()");
   await evaluate(sessionId, "document.querySelector('[data-action=start-game]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "games");
   assert.equal(await evaluate(sessionId, "document.querySelectorAll('.game-entry').length"), 3);
@@ -354,16 +424,15 @@ async function run() {
   assert.deepEqual(releasedBreath, { label: "呼", releasing: true });
   await evaluate(sessionId, "document.querySelector('[data-action=next]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "ground");
-  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getGroundCount()"), 15);
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getGroundCount()"), 6);
+  assert.match(await evaluate(sessionId, "document.querySelector('.flow-nav__mark').textContent"), /1\/6/);
   assert.equal(await evaluate(sessionId, "document.querySelector('#grounding-object').classList.contains('grounding-object--see')"), true);
   const firstGroundingCopy = JSON.parse(await evaluate(sessionId, `JSON.stringify({
-    context: document.querySelector('#grounding-context').textContent,
-    contextHidden: document.querySelector('#grounding-context').hidden,
+    contextCount: document.querySelectorAll('#grounding-context').length,
     prompt: document.querySelector('#grounding-prompt').textContent,
     gameAction: document.querySelector('[data-action=start-game]').textContent
   })`));
-  assert.equal(firstGroundingCopy.context, "");
-  assert.equal(firstGroundingCopy.contextHidden, true);
+  assert.equal(firstGroundingCopy.contextCount, 0);
   assert.match(firstGroundingCopy.prompt, /四周/);
   assert.match(firstGroundingCopy.gameAction, /直接玩小游戏/);
   assert.equal(await evaluate(sessionId, "document.querySelector('[data-action=ground-next]').disabled"), true);
@@ -442,7 +511,7 @@ async function run() {
   assert.match(typedGround.echo, /窗框/);
   assert.equal(typedGround.nextDisabled, true);
 
-  for (let index = 0; index < 4; index += 1) {
+  for (let index = 0; index < 2; index += 1) {
     await evaluate(sessionId, `(() => {
       const field = document.querySelector('#ground-answer');
       field.value = '眼前的东西';
@@ -451,7 +520,13 @@ async function run() {
     })()`);
   }
   assert.equal(await evaluate(sessionId, "document.querySelector('#grounding-object').classList.contains('grounding-object--touch')"), true);
-  for (let index = 5; index < 15; index += 1) {
+  assert.match(await evaluate(sessionId, "document.querySelector('.flow-nav__mark').textContent"), /4\/6/);
+  const touchGroundingCopy = JSON.parse(await evaluate(sessionId, `JSON.stringify({
+    contextCount: document.querySelectorAll('#grounding-context').length,
+    prompt: document.querySelector('#grounding-prompt').textContent
+  })`));
+  assert.equal(touchGroundingCopy.contextCount, 0, "grounding should show one concrete prompt without a generic instruction above it");
+  for (let index = 3; index < 6; index += 1) {
     await evaluate(sessionId, `(() => {
       const field = document.querySelector('#ground-answer');
       field.value = '我找到了';
@@ -459,9 +534,27 @@ async function run() {
       document.querySelector('[data-action=ground-next]').click();
     })()`);
   }
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "ground-choice");
+  assert.equal(await evaluate(sessionId, "document.querySelectorAll('[data-action=ground-wait], [data-action=ground-again]').length"), 2);
+  assert.match(await evaluate(sessionId, "document.querySelector('[data-action=ground-wait]').textContent"), /够了.*去等一会儿/);
+  await evaluate(sessionId, "document.querySelector('[data-action=ground-again]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "ground");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getGroundIndex()"), 0);
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getGroundCount()"), 6);
+  assert.match(await evaluate(sessionId, "document.querySelector('.flow-nav__mark').textContent"), /1\/6/);
+  for (let index = 0; index < 6; index += 1) {
+    await evaluate(sessionId, `(() => {
+      const field = document.querySelector('#ground-answer');
+      field.value = '第二轮找到的';
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('[data-action=ground-next]').click();
+    })()`);
+  }
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "ground-choice");
+  await evaluate(sessionId, "document.querySelector('[data-action=ground-wait]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "wait");
   assert.match(await evaluate(sessionId, "document.querySelector('#wait-timer').textContent"), /^00:0[01]$/);
-  assert.match(await evaluate(sessionId, "document.querySelector('.grounding-recall').textContent"), /我找到了/);
+  assert.match(await evaluate(sessionId, "document.querySelector('.grounding-recall').textContent"), /第二轮找到的/);
   await evaluate(sessionId, `new Promise((resolve, reject) => {
     const started = Date.now();
     function check() {

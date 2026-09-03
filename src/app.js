@@ -152,12 +152,32 @@
     return copy.slice(0, count);
   }
 
-  function createGroundingRun() {
-    return takeRandom(GROUNDING_POOLS.see, 5)
-      .concat(takeRandom(GROUNDING_POOLS.touch, 4))
-      .concat(takeRandom(GROUNDING_POOLS.hear, 3))
-      .concat(takeRandom(GROUNDING_POOLS.smell, 2))
-      .concat(takeRandom(GROUNDING_POOLS.taste, 1));
+  function takeGroundingPrompts(source, count, excludedPrompts) {
+    var excluded = {};
+    (excludedPrompts || []).forEach(function (prompt) {
+      excluded[prompt] = true;
+    });
+    var fresh = source.filter(function (step) {
+      return !excluded[step.prompt];
+    });
+    var selected = takeRandom(fresh, count);
+    if (selected.length < count) {
+      var alreadySelected = {};
+      selected.forEach(function (step) {
+        alreadySelected[step.prompt] = true;
+      });
+      var fallback = source.filter(function (step) {
+        return !alreadySelected[step.prompt];
+      });
+      selected = selected.concat(takeRandom(fallback, count - selected.length));
+    }
+    return selected;
+  }
+
+  function createGroundingRun(excludedPrompts) {
+    return takeGroundingPrompts(GROUNDING_POOLS.see, 3, excludedPrompts)
+      .concat(takeGroundingPrompts(GROUNDING_POOLS.touch, 2, excludedPrompts))
+      .concat(takeGroundingPrompts(GROUNDING_POOLS.hear, 1, excludedPrompts));
   }
 
   var WAIT_MESSAGES = [
@@ -538,6 +558,8 @@
     if (transitionTimer) window.clearTimeout(transitionTimer);
 
     if (immediate || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      navigating = false;
+      app.classList.remove("is-fading");
       state.route = route;
       render();
       return;
@@ -559,15 +581,16 @@
 
   function flowNav(label, showDirectWords) {
     var direct = showDirectWords === false
-      ? '<span aria-hidden="true"></span>'
-      : '<button class="quiet-link" type="button" data-action="words">直接看给我的话&nbsp;→</button>';
+      ? '<span class="flow-nav__spacer" aria-hidden="true"></span>'
+      : '<button class="quiet-link flow-nav__words" type="button" data-action="words" aria-label="直接看给我的话">给我的话&nbsp;→</button>';
     return [
-      '<div class="flow-nav">',
+      '<nav class="flow-nav" aria-label="当前流程导航">',
+      '<button class="quiet-link flow-nav__exit" type="button" data-action="emergency-exit" aria-label="退出当前流程，回到首页">退出</button>',
       '<span class="flow-nav__mark">',
       escapeHtml(label),
       "</span>",
       direct,
-      "</div>",
+      "</nav>",
     ].join("");
   }
 
@@ -616,13 +639,16 @@
     ].join("");
   }
 
-  function innerPageNav(backAction, backLabel, eyebrow) {
+  function innerPageNav(backAction, backLabel, eyebrow, showEmergencyExit) {
     return [
-      '<nav class="page-nav">',
+      '<nav class="page-nav', showEmergencyExit ? " page-nav--with-exit" : "", '">',
       '<button class="page-back" type="button" data-action="', escapeHtml(backAction), '">',
       escapeHtml(backLabel),
       "</button>",
       '<span class="eyebrow">', escapeHtml(eyebrow), "</span>",
+      showEmergencyExit
+        ? '<button class="quiet-link page-exit" type="button" data-action="emergency-exit" aria-label="退出当前流程，回到首页">退出</button>'
+        : "",
       "</nav>",
     ].join("");
   }
@@ -1259,7 +1285,6 @@
   function renderGround() {
     var step = state.groundSteps[state.groundIndex] || state.groundSteps[0];
     var answerEcho = groundingAnswerEcho();
-    var context = groundingContext(step.sense);
     var body = [
       '<div class="grounding-object grounding-object--',
       groundingVisualClass(step.sense),
@@ -1267,11 +1292,6 @@
       '<span class="grounding-sense" id="grounding-sense">',
       escapeHtml(step.sense),
       "</span>",
-      '<p class="grounding-context" id="grounding-context"',
-      context ? "" : " hidden",
-      ">",
-      escapeHtml(context),
-      "</p>",
       '<h1 class="grounding-prompt" id="grounding-prompt" aria-live="polite">',
       escapeHtml(step.prompt),
       "</h1>",
@@ -1291,8 +1311,25 @@
       '<button class="quiet-link" type="button" data-action="start-game">直接玩小游戏&nbsp;→</button>',
       "</div>",
     ].join("");
-    return calmScreen("落地", body, step.button, "ground-next", "", secondary, true, true)
+    var progressLabel = "落地 · " + String(state.groundIndex + 1) + "/" + String(state.groundSteps.length);
+    return calmScreen(progressLabel, body, step.button, "ground-next", "", secondary, true, true)
       .replace("screen screen-calm", "screen screen-calm screen-ground");
+  }
+
+  function renderGroundChoice() {
+    var body = [
+      '<div class="grounding-round-finish">',
+      '<div class="grounding-round-finish__trail" aria-hidden="true">',
+      '<i class="is-see"></i><i class="is-see"></i><i class="is-see"></i>',
+      '<i class="is-touch"></i><i class="is-touch"></i><i class="is-hear"></i>',
+      "</div>",
+      '<h1 class="display-title">这一轮，到这里。</h1>',
+      '<p class="support-copy">你已经看了三样、碰了两样、听了一个。觉得够了，就去等一会儿；还想继续，再换六个。</p>',
+      "</div>",
+    ].join("");
+    var secondary = '<button class="secondary-button" type="button" data-action="ground-again">再来一轮</button>';
+    return calmScreen("落地", body, "够了，去等一会儿", "ground-wait", "", secondary, true)
+      .replace("screen screen-calm", "screen screen-calm screen-ground-choice");
   }
 
   function elapsedWaitSeconds() {
@@ -1423,7 +1460,7 @@
   function renderGames() {
     return [
       '<section class="screen screen-scroll game-room">',
-      innerPageNav("games-back", "回到刚才", "小游戏"),
+      innerPageNav("games-back", "回到刚才", "小游戏", true),
       '<header class="game-room__intro">',
       '<span class="game-room__kicker">让注意力换个座位</span>',
       '<h1>想让哪一小块<br>先忙起来？</h1>',
@@ -1454,7 +1491,7 @@
   function renderTriviaHome() {
     return [
       '<section class="screen screen-scroll trivia-page trivia-home">',
-      innerPageNav("games", "换个玩法", "冷知识问答"),
+      innerPageNav("games", "换个玩法", "冷知识问答", true),
       '<header class="trivia-home__intro">',
       '<span class="trivia-home__kicker">让好奇心忙一会儿</span>',
       '<h1>从小抽屉里，<br>拿一件没什么急用的事。</h1>',
@@ -1497,7 +1534,7 @@
     }).join("");
     return [
       '<section class="screen screen-scroll trivia-page trivia-drawers">',
-      innerPageNav("trivia-home", "回到问答", "自己挑一个"),
+      innerPageNav("trivia-home", "回到问答", "自己挑一个", true),
       '<header class="trivia-drawers__intro">',
       '<h1>今天拉开哪一格？</h1>',
       '<p>露出蓝纸条的，是你已经看过答案的题。想重看也可以照常打开。</p>',
@@ -1548,7 +1585,7 @@
     ].join("") : '<p class="trivia-question__permission">随便猜。这里没有分数，也不记对错。</p>';
     return [
       '<section class="screen screen-scroll trivia-page trivia-question">',
-      innerPageNav(backAction, backLabel, meta.label + " · " + String(question.number).padStart(2, "0")),
+      innerPageNav(backAction, backLabel, meta.label + " · " + String(question.number).padStart(2, "0"), true),
       '<header class="trivia-question__header">',
       '<span class="trivia-question__title">', escapeHtml(question.title), "</span>",
       '<h1>', escapeHtml(question.prompt), "</h1>",
@@ -1762,6 +1799,7 @@
     else if (state.route === "accept") markup = renderAccept();
     else if (state.route === "breathe") markup = renderBreathe();
     else if (state.route === "ground") markup = renderGround();
+    else if (state.route === "ground-choice") markup = renderGroundChoice();
     else if (state.route === "wait") markup = renderWait();
     else if (state.route === "games") markup = renderGames();
     else if (state.route === "trivia-home") markup = renderTriviaHome();
@@ -1858,14 +1896,6 @@
     if (sense === "闻到") return "例如：洗衣液，或没有";
     if (sense === "尝到") return "例如：淡淡的甜，或没有";
     return "例如：窗框";
-  }
-
-  function groundingContext(sense) {
-    if (sense === "看见") return "";
-    if (sense === "听见") return "先不用看手机，听听四周，在你所在的地方找。";
-    if (sense === "触碰") return "把手伸向身边，在你所在的地方找。";
-    if (sense === "闻到") return "留意你所在的地方和手边的东西。";
-    return "把注意力放到嘴里此刻真实的感觉上。";
   }
 
   function groundingAnswerEcho() {
@@ -2391,19 +2421,17 @@
     var step = state.groundSteps[state.groundIndex];
     var object = document.getElementById("grounding-object");
     var sense = document.getElementById("grounding-sense");
-    var context = document.getElementById("grounding-context");
+    var progress = app.querySelector(".flow-nav__mark");
     var prompt = document.getElementById("grounding-prompt");
     var button = app.querySelector('[data-action="ground-next"]');
     var answer = document.getElementById("ground-answer");
     var answerEcho = document.getElementById("ground-answer-echo");
-    if (!step || !object || !sense || !context || !prompt || !button) return;
+    if (!step || !object || !sense || !prompt || !button) return;
     if (groundingAnimationTimer) window.clearTimeout(groundingAnimationTimer);
     object.className = "grounding-object grounding-object--" + groundingVisualClass(step.sense);
     restartClassAnimation(object, "is-settling");
     sense.textContent = step.sense;
-    var contextCopy = groundingContext(step.sense);
-    context.textContent = contextCopy;
-    context.hidden = !contextCopy;
+    if (progress) progress.textContent = "落地 · " + String(state.groundIndex + 1) + "/" + String(state.groundSteps.length);
     prompt.textContent = step.prompt;
     restartClassAnimation(prompt, "is-settling");
     button.textContent = step.button;
@@ -2958,6 +2986,16 @@
     state.waitFogSeed = randomFogSeed();
   }
 
+  function restartGroundingRun() {
+    state.groundIndex = 0;
+    state.groundSteps = createGroundingRun(state.groundUsedPrompts);
+    state.groundSteps.forEach(function (step) {
+      if (state.groundUsedPrompts.indexOf(step.prompt) < 0) state.groundUsedPrompts.push(step.prompt);
+    });
+    state.groundAnswers = [];
+    navigate("ground");
+  }
+
   app.addEventListener("click", function (event) {
     var control = event.target.closest("[data-action]");
     if (!control) return;
@@ -3119,9 +3157,13 @@
         state.groundIndex += 1;
         updateGroundingStep();
       } else {
-        if (!state.waitStartedAt) state.waitStartedAt = Date.now();
-        navigate("wait");
+        navigate("ground-choice");
       }
+    } else if (action === "ground-again") {
+      restartGroundingRun();
+    } else if (action === "ground-wait") {
+      if (!state.waitStartedAt) state.waitStartedAt = Date.now();
+      navigate("wait");
     } else if (action === "wait-window") {
       chooseWaitWindow(control);
     } else if (action === "wait-replay") {
@@ -3151,6 +3193,9 @@
     } else if (action === "wait-again") {
       if (!state.waitStartedAt) state.waitStartedAt = Date.now();
       navigate("wait");
+    } else if (action === "emergency-exit") {
+      resetEmergencyRun();
+      navigate("home", true);
     } else if (action === "home") {
       resetEmergencyRun();
       navigate("home");
