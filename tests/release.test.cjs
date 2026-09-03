@@ -10,7 +10,11 @@ const css = read("styles.css");
 const app = read("src/app.js");
 const svg = read("assets/icon.svg");
 const secondFearNote = read("content/notes/第二层恐惧.md");
+const acceptanceNote = read("content/notes/来吧老朋友.md");
+const setbackNote = read("content/notes/又来了路还在.md");
+const workbookNote = read("content/notes/焦虑症与恐惧症手册-阅读导览.md");
 const runtimeSource = [html, css, app, svg].join("\n");
+const publicProse = [app, read("README.md"), secondFearNote, acceptanceNote, setbackNote, workbookNote].join("\n");
 
 test("package version and the one offline entry agree", () => {
   const pkg = JSON.parse(read("package.json"));
@@ -74,7 +78,7 @@ test("the emergency route has active, focused stages and an always-available hum
   assert.match(app, /FOG_BRUSH_RADIUS = 30/);
   assert.match(app, /revealed >= 0\.78/);
   assert.doesNotMatch(app, /id="wait-trace-board"|getPointAtLength|followWaitTrace/);
-  assert.match(app, /你不用现在就好起来。按下去，我们一次只做一件事/);
+  assert.match(app, /现在只按一下。接下来的事，我们一件一件来/);
   assert.doesNotMatch(app, /<p class="home-note">我也经历过惊恐/);
   assert.match(app, /data-action="support-swap"/);
   assert.match(app, /再给我一句/);
@@ -94,23 +98,42 @@ test("the calm route has four useful branches without turning them into retentio
   assert.match(app, /data-action="open-practice"/);
   assert.match(app, /data-action="open-reflection"/);
   assert.match(app, /data-action="learn-layer"/);
+  assert.match(app, /data-note="accept"/);
+  assert.match(app, /data-note="setback"/);
+  assert.match(app, /data-note="workbook"/);
   assert.match(app, /id="reflection-form"/);
-  assert.match(app, /不会保存成发作记录/);
-  assert.match(secondFearNote, /“那又怎样？”不是逞强/);
+  assert.match(app, /离开后就散了/);
+  assert.match(secondFearNote, /“那又怎样？”把选择拿回来/);
   assert.match(secondFearNote, /两声警报/);
   assert.match(secondFearNote, /个人阅读笔记与经验整理/);
-  assert.doesNotMatch(app + secondFearNote, /心律不齐一点都不危险|不需要镇静剂|唯一的敌人就是自己的恐惧/);
+  assert.match(acceptanceNote, /来吧，老朋友/);
+  assert.match(acceptanceNote, /先给它一把椅子/);
+  assert.match(setbackNote, /又来了，路还在/);
+  assert.match(workbookNote, /第 6 章“应对惊恐发作”/);
+  assert.match(workbookNote, /这篇是阅读导览/);
+  assert.doesNotMatch(app + secondFearNote + acceptanceNote + setbackNote + workbookNote, /心律不齐一点都不危险|不需要镇静剂|唯一的敌人就是自己的恐惧/);
   assert.doesNotMatch(app, /连续学习|阅读天数|完成百分比/);
 });
 
 test("time copy avoids promises the tool cannot make", () => {
-  assert.match(app, /每个人的时程不同/);
-  assert.match(app, /两种都可以/);
-  assert.match(app, /五本可以慢慢读的书/);
-  assert.match(app, /《焦虑症的自救》[\s\S]*面对、接受、飘然和等待/);
+  assert.match(app, /每个人走完这一阵的时间各不相同/);
+  assert.match(app, /此刻是什么样就是什么样/);
+  assert.match(app, /可以慢慢读的书/);
+  assert.match(app, /《焦虑症的自救》[\s\S]*《焦虑症与恐惧症手册》[\s\S]*《直视骄阳》/);
+  assert.match(app, /惊恐很响。[\s\S]*纸老虎/);
+  assert.match(app, /难受是真的，危险未必是真的/);
+  assert.match(app, /每次发作都给你一回练习机会/);
+  assert.match(app, /经验就在这些时刻慢慢攒起来/);
+  assert.match(secondFearNote, /这样的经验很宝贵/);
   assert.doesNotMatch(app, /你没事(?:的)?|十分钟。它开始退了|峰值通常在十分钟前后|每一次都会退/);
   assert.match(app, /Date\.now\(\)/);
   assert.match(app, /setInterval\(updateWaitClock, 1000\)/);
+});
+
+test("public copy welcomes the familiar feeling without negative parallelisms", () => {
+  assert.match(app, /哦，是你。来吧，老朋友/);
+  assert.match(app + acceptanceNote, /给它一把椅子/);
+  assert.doesNotMatch(publicProse, /不只是|不是[^。！？\n]{0,80}(?:也不是|更不是|而是)/);
 });
 
 test("the generated card is a local 1080 by 1920 PNG with manual wrapping", () => {
@@ -133,8 +156,8 @@ test("personal memories are examples, never assigned as the reader's defaults", 
   assert.match(app, /scenePlace: ""/);
   assert.match(app, /data-action="use-anchor-example"/);
   assert.match(app, /data-action="use-scene-example"/);
-  assert.match(app, /这是我的例子，不一定是你的/);
-  assert.match(app, /这是我的一个真实例子/);
+  assert.match(app, /先借我的记忆找找感觉/);
+  assert.match(app, /我记得这样一幕/);
   assert.match(app, /draft\.anchor \|\| "还没写，也没关系"/);
   assert.doesNotMatch(app, /anchor: "雨天的假山"/);
   assert.doesNotMatch(runtimeSource, /按摩颈部|把脸埋在冰冷水里|像排便困难时那样使劲/);

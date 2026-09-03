@@ -566,6 +566,15 @@ textarea:focus {
   text-align: center;
 }
 
+.learning-notes-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 11px;
+  color: var(--paper-faint);
+  font-size: 11px;
+}
+
 .featured-note {
   position: relative;
   display: block;
@@ -620,6 +629,76 @@ textarea:focus {
   color: var(--paper);
   font-size: 13px;
   font-style: normal;
+}
+
+.note-shelf {
+  margin-top: 12px;
+}
+
+.note-card {
+  display: grid;
+  width: 100%;
+  min-height: 96px;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 15px 14px 15px 17px;
+  border: 1px solid var(--line);
+  border-left-color: rgba(130, 154, 145, 0.48);
+  border-radius: 15px;
+  background: rgba(235, 230, 219, 0.022);
+  color: var(--paper);
+  text-align: left;
+}
+
+.note-card + .note-card {
+  margin-top: 9px;
+}
+
+.note-card:active {
+  border-color: rgba(190, 207, 199, 0.45);
+  background: rgba(130, 154, 145, 0.09);
+}
+
+.note-card small,
+.note-card strong,
+.note-card i {
+  display: block;
+}
+
+.note-card small {
+  color: var(--sea-glass);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+.note-card strong {
+  margin-top: 4px;
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.note-card i {
+  margin-top: 3px;
+  color: var(--paper-faint);
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.55;
+}
+
+.note-card b {
+  display: inline-flex;
+  min-width: 48px;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(130, 154, 145, 0.28);
+  border-radius: 999px;
+  color: var(--paper-dim);
+  font-size: 11px;
+  font-weight: 500;
 }
 
 .brief-link {
@@ -746,6 +825,39 @@ textarea:focus {
 
 .note-section > p + p {
   margin-top: 16px;
+}
+
+.note-route-list ul {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.note-route-list li {
+  padding: 12px 0;
+  border-top: 1px solid rgba(235, 230, 219, 0.08);
+}
+
+.note-route-list li:first-child {
+  border-top: 0;
+}
+
+.note-route-list strong,
+.note-route-list span {
+  display: block;
+}
+
+.note-route-list strong {
+  color: var(--paper);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.note-route-list span {
+  margin-top: 3px;
+  color: var(--paper-dim);
+  font-size: 13px;
+  line-height: 1.7;
 }
 
 .fear-layer-demo {
@@ -2219,6 +2331,22 @@ textarea:focus {
   color: var(--paper-dim);
 }
 
+.understand-lead {
+  margin-top: 16px;
+  line-height: 1.85;
+}
+
+.paper-tiger-line {
+  margin: 18px 0 0;
+  padding: 15px 17px;
+  border-left: 2px solid var(--sea-glass);
+  background: rgba(130, 154, 145, 0.065);
+  color: var(--paper);
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  font-size: 20px;
+  line-height: 1.65;
+}
+
 .book-list {
   margin: 0;
   padding: 0;
@@ -2245,6 +2373,11 @@ textarea:focus {
 .book-copy {
   color: var(--paper-dim);
   font-size: 14px;
+}
+
+.book-notes-link {
+  width: 100%;
+  margin-top: 13px;
 }
 
 .medical-note {

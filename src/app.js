@@ -135,13 +135,13 @@
   }
 
   var WAIT_MESSAGES = [
-    { at: 0, text: "什么都不用做。我在这儿，我们等这一阵感觉变化。" },
+    { at: 0, text: "先待在这里。我陪你等这阵感觉慢慢变化。" },
     { at: 60, text: "一分钟过去了。你还在。" },
-    { at: 120, text: "强烈的感觉通常会到一个高点，再逐渐变化。你可能正靠近它，也可能已经过了它。" },
-    { at: 180, text: "不需要它现在就走。只是不追着每一个感觉跑。" },
+    { at: 120, text: "强烈的感觉通常会爬到一个高处，再慢慢往下走。你可能还在上坡，也可能已经越过最高处。" },
+    { at: 180, text: "它可以继续待一会儿。先别追着每一个感觉跑。" },
     { at: 300, text: "五分钟过去了。时间一直在往前。" },
-    { at: 480, text: "八分钟了。每个人的时程不同，不用拿自己和数字比较。" },
-    { at: 600, text: "十分钟。感觉也许还强，也许已经变了一点；两种都可以。" },
+    { at: 480, text: "八分钟了。这条路没有标准速度，数字先放在一边。" },
+    { at: 600, text: "十分钟。感觉还强也好，已经松一点也好，此刻是什么样就是什么样。" },
     { at: 900, text: "十五分钟。等你自己觉得可以了，再按“它退了”。" },
   ];
 
@@ -200,6 +200,7 @@
     waitWindowShowIndex: -1,
     waitWindowRound: 0,
     waitFogSeed: randomFogSeed(),
+    learnNote: "second-fear",
     learnLayer: "",
     practiceStep: 0,
     practiceFocus: "",
@@ -444,7 +445,7 @@
       '<div class="emergency-button-wrap">',
       '<button class="emergency-button" type="button" data-action="start">我现在<br>很难受</button>',
       "</div>",
-      '<p class="home-note">你不用现在就好起来。按下去，我们一次只做一件事。</p>',
+      '<p class="home-note">现在只按一下。接下来的事，我们一件一件来。</p>',
       '<div class="home__secondary">',
       '<button class="secondary-button" type="button" data-action="calm">我现在还好</button>',
       '<button class="text-button" type="button" data-action="understand">先了解一下&nbsp;→</button>',
@@ -471,8 +472,8 @@
       innerPageNav("home", "回到首页", "状态好时"),
       '<header class="calm-hub__intro">',
       '<span class="calm-hub__kicker">我现在还好</span>',
-      '<h1>现在不用急着做什么。<br>时间是你的。</h1>',
-      '<p>可以看懂一点，也可以只留一句话给下一次。这里没有必须完成的顺序。</p>',
+      '<h1>现在还好。<br>时间是你的。</h1>',
+      '<p>今天想看一页就看一页，也可以留一句话给下一次。从哪里开始都行。</p>',
       "</header>",
       '<div class="calm-ledger" aria-label="平时可以做的事">',
       '<button class="calm-entry" type="button" data-action="open-learn">',
@@ -496,7 +497,7 @@
       '<span class="calm-entry__arrow" aria-hidden="true">打开&nbsp;→</span>',
       "</button>",
       "</div>",
-      '<p class="calm-hub__leave">不需要全部做完。看一页也算，随时可以离开。</p>',
+      '<p class="calm-hub__leave">今天看一页也够。觉得够了，随时离开。</p>',
       "</section>",
     ].join("");
   }
@@ -507,30 +508,34 @@
       innerPageNav("calm", "回到平时", "看懂它"),
       '<header class="learning-index__intro">',
       '<h1>先弄懂一个<br>真正卡住你的地方。</h1>',
-      '<p>不是考试，也不需要一次读完。每篇只回答一个问题。</p>',
+      '<p>每篇只谈一个问题。挑一篇，读到想停的地方就停。</p>',
       "</header>",
-      '<button class="featured-note" type="button" data-action="open-learn-article">',
-      '<span class="featured-note__meta">第一篇 · 第二层恐惧</span>',
-      '<strong>“那又怎样？”<br>不是逞强</strong>',
+      '<div class="learning-notes-heading"><span class="eyebrow">可以慢慢读的笔记</span><span>选一篇就好</span></div>',
+      '<button class="featured-note" type="button" data-action="open-learn-article" data-note="second-fear">',
+      '<span class="featured-note__meta">《焦虑症的自救》 · 第二层恐惧</span>',
+      '<strong>“那又怎样？”<br>把选择拿回来</strong>',
       '<span>身体刚响了一声，脑子里的第二声警报为什么会跟上来？</span>',
       '<i aria-hidden="true">读这一篇 →</i>',
       "</button>",
+      '<div class="note-shelf">',
+      '<button class="note-card" type="button" data-action="open-learn-article" data-note="accept">',
+      '<span><small>《焦虑症的自救》 · 接受</small><strong>来吧，老朋友</strong><i>惊恐推门进来时，先给它一把椅子。</i></span><b aria-hidden="true">读&nbsp;→</b>',
+      "</button>",
+      '<button class="note-card" type="button" data-action="open-learn-article" data-note="setback">',
+      '<span><small>《焦虑症的自救》 · 阻碍</small><strong>又来了，路还在</strong><i>旧症状回来，走过的路仍在脚下。</i></span><b aria-hidden="true">读&nbsp;→</b>',
+      "</button>",
+      '<button class="note-card" type="button" data-action="open-learn-article" data-note="workbook">',
+      '<span><small>《焦虑症与恐惧症手册》 · 阅读导览</small><strong>先翻到用得上的那一页</strong><i>把厚手册当成工具箱，卡在哪里就翻到哪里。</i></span><b aria-hidden="true">读&nbsp;→</b>',
+      "</button>",
+      "</div>",
       '<button class="brief-link" type="button" data-action="open-understand">',
-      '<span><strong>先知道最基本的三件事</strong><small>身体警报、第二层恐惧、它会变化</small></span>',
+      '<span><strong>第一次来，先看这张短说明</strong><small>难受是真的，纸老虎也真的会吓人</small></span>',
       '<span aria-hidden="true">→</span>',
       "</button>",
-      '<section class="learning-coming">',
-      '<span class="eyebrow">接下来慢慢写</span>',
-      '<ul>',
-      '<li>接受不是认输，是不再跟身体拔河</li>',
-      '<li>“飘然”不是强迫自己放松</li>',
-      '<li>症状又来了，不等于回到原点</li>',
-      "</ul>",
-      "</section>",
       '<section class="quiet-bookshelf">',
       '<span class="eyebrow">这些书会成为线索</span>',
-      '<p>《焦虑症的自救》 · 《直视骄阳》 · 《心湖上的倒影》 · 《世界上最快乐的人》 · 《庄子》</p>',
-      '<small>书不是答案。这里会保留真正有用的部分，也会删掉过时、绝对或让人羞耻的说法。</small>',
+      '<p>《焦虑症的自救》 · 《焦虑症与恐惧症手册》 · 《直视骄阳》 · 《心湖上的倒影》 · 《世界上最快乐的人》 · 《庄子》</p>',
+      '<small>这些书给了我一些线索。管用的留下；过时、绝对或让人羞耻的说法，就放下。</small>',
       "</section>",
       "</section>",
     ].join("");
@@ -547,38 +552,42 @@
   }
 
   function renderLearnArticle() {
+    if (state.learnNote === "accept") return renderAcceptanceNote();
+    if (state.learnNote === "setback") return renderSetbackNote();
+    if (state.learnNote === "workbook") return renderWorkbookGuide();
+    return renderSecondFearNote();
+  }
+
+  function renderSecondFearNote() {
     return [
       '<section class="screen screen-scroll note-article">',
       innerPageNav("open-learn", "回到看懂它", "个人阅读笔记"),
       '<article>',
       '<header class="note-article__header">',
       '<span>第二层恐惧</span>',
-      '<h1>“那又怎样？”<br>不是逞强</h1>',
-      '<p>惊恐最难受的地方，往往不只是一阵心跳、发麻或眩晕。身体刚响了一声，脑子里的第二声警报就跟上来了。</p>',
+      '<h1>“那又怎样？”<br>把选择拿回来</h1>',
+      '<p>惊恐一来，身体已经够吵了。心跳、发麻、眩晕一起涌上来，脑子还要追着问：是不是要出事？怎么还没停？</p>',
       "</header>",
       '<section class="note-section">',
       '<h2>两声警报</h2>',
-      '<p>克莱尔·威克斯给了我一个很有用的分法。第一层是身体和情绪本来的反应；第二层，是我开始害怕这些反应，盯着它们，催它们消失，再把每一次波动解释成危险。</p>',
+      '<p>克莱尔·威克斯给了我一个很有用的分法。第一声来自身体和情绪。第二声来自我对这些感觉的恐惧：盯着它们，催它们消失，把每一次波动都解释成危险。</p>',
       '<div class="fear-layer-demo">',
       '<button class="', state.learnLayer === "first" ? "is-selected" : "", '" type="button" data-action="learn-layer" data-layer="first" aria-pressed="', state.learnLayer === "first" ? "true" : "false", '"><span>第一声</span><strong>心跳突然变快</strong></button>',
       '<button class="', state.learnLayer === "second" ? "is-selected" : "", '" type="button" data-action="learn-layer" data-layer="second" aria-pressed="', state.learnLayer === "second" ? "true" : "false", '"><span>第二声</span><strong>它是不是要出事？</strong></button>',
       '<p id="learn-layer-copy" aria-live="polite">', escapeHtml(learnLayerCopy()), "</p>",
       "</div>",
-      '<p>这个模型不是对所有症状的诊断，却能解释我为什么会越怕越响：我不只在经历感觉，还在害怕自己正在经历感觉。</p>',
+      '<p>这解释了惊恐为什么会越怕越响。身体正在经历一阵反应，我又被“害怕这阵反应”裹住了。第一声需要时间，第二声却可以少添一把火。</p>',
       "</section>",
       '<section class="note-section">',
-      '<h2>它在回答什么</h2>',
-      '<p>“那又怎样”不是说身体怎样都无所谓，也不是拿一句狠话证明自己不怕。我是在回答第二声警报：我听见你说最坏的事情要发生了，但我不必马上检查、逃开，也不必强迫自己立刻平静。</p>',
+      '<h2>四个字，留出一点空隙</h2>',
+      '<p>“那又怎样”是在回答第二声警报。它又把最坏的结果喊了一遍。我听见了，然后回它一句：哦，知道了。先坐会儿。</p>',
       '<blockquote class="personal-line">怕可以在这里，<br>我也可以在这里。</blockquote>',
+      '<p>这四个字赶不走惊恐。它们给我留下一点空隙，让我缓一缓，再决定要不要检查、要不要逃。选择就从这点空隙里回来。</p>',
       "</section>",
-      '<section class="note-section note-questions">',
-      '<h2>下次先问三句</h2>',
-      '<ol>',
-      '<li>现在最响的是哪一种感觉？</li>',
-      '<li>我又在害怕它意味着什么？</li>',
-      '<li>第二个问题，能不能先不解决？</li>',
-      "</ol>",
-      '<p>“那又怎样”没有替我赶走惊恐。它只是让我不再继续给惊恐添一层惊恐。对我来说，这不是逞强，而是把一点选择权拿回来。</p>',
+      '<section class="note-section">',
+      '<h2>信心要练出来</h2>',
+      '<p>每次发作都能成为一回练习。书能给地图，路还是要自己走。惊恐冲上来，我可以像认出一位吵闹的老朋友那样认出它：哦，是你。来吧，坐一会儿。</p>',
+      '<p>然后少检查一次，少逃一步，亲眼看着这阵感觉怎样变化。这样的经验很宝贵。一次只攒下一点也没关系，积得久了，它就是硬东西。惊恐再来时，我手里有自己走过的路。</p>',
       "</section>",
       '<aside class="note-boundary">第一次出现的症状，或与以往明显不同的症状，仍然应该交给医生判断。</aside>',
       '<footer class="note-source">阅读线索：克莱尔·威克斯《焦虑症的自救》。本文是个人阅读笔记与经验整理，不替代诊断和治疗。</footer>',
@@ -591,6 +600,120 @@
     ].join("");
   }
 
+  function renderSimpleNote(meta, title, intro, body, source) {
+    return [
+      '<section class="screen screen-scroll note-article">',
+      innerPageNav("open-learn", "回到看懂它", "阅读笔记"),
+      '<article>',
+      '<header class="note-article__header">',
+      '<span>', escapeHtml(meta), "</span>",
+      '<h1>', title, "</h1>",
+      '<p>', escapeHtml(intro), "</p>",
+      "</header>",
+      body,
+      '<aside class="note-boundary">第一次出现的症状，或与以往明显不同的症状，仍然应该交给医生判断。练习中明显不适，也可以随时停下。</aside>',
+      '<footer class="note-source">', escapeHtml(source), "</footer>",
+      "</article>",
+      '<div class="article-actions">',
+      '<button class="primary-button" type="button" data-action="open-practice">平时练一小步</button>',
+      '<button class="secondary-button" type="button" data-action="open-learn">回到全部笔记</button>',
+      "</div>",
+      "</section>",
+    ].join("");
+  }
+
+  function renderAcceptanceNote() {
+    var body = [
+      '<section class="note-section">',
+      '<h2>先给它一把椅子</h2>',
+      '<p>欢迎惊恐，听起来有点反常。其实这件事很朴素。熟悉的心跳、发麻和眩晕来了，就让它们暂时待着。我省下检查、抵抗和催促的力气。</p>',
+      '<p>它像一位很吵、总爱报假警的老朋友。一进门就说有大事发生，嗓门还是那么大。可我认识它，也见过它离开。给它一把椅子，我继续过眼前这一分钟。</p>',
+      "</section>",
+      '<section class="note-section">',
+      '<h2>手里的枪可以放下了</h2>',
+      '<p>威克斯写过一个反常识的比喻：面对猛虎，先丢下手里的枪。瞄准、戒备、等它扑来，会耗掉人全部的力气。手松开以后，才有余地看清眼前到底发生了什么。</p>',
+      '<blockquote class="personal-line">来吧，惊恐。<br>你可以在这里，我也在这里。</blockquote>',
+      '<p>我仍然会怕。欢迎它，只表示我愿意和它同处一会儿，让身体走完自己的过程。</p>',
+      "</section>",
+      '<section class="note-section">',
+      '<h2>下一次，只练一点</h2>',
+      '<p>发现自己又在催“怎么还没好”，先停一下。环境安全时，可以少检查一次，也可以少逃一步。手边还有一件小事，就照原来的速度做几秒。选一样就够。</p>',
+      '<p>有时“接受”也会变成新的催促：“我都欢迎你了，怎么还不走？”这句话来了，也给它一把椅子。我们慢慢练。</p>',
+      "</section>",
+    ].join("");
+    return renderSimpleNote(
+      "《焦虑症的自救》 · 接受",
+      "来吧，老朋友",
+      "惊恐冲上来时，我总想把它推出门。越推，身体绷得越紧。后来我开始先认出它：哦，又是你。",
+      body,
+      "阅读线索：克莱尔·威克斯《焦虑症的自救》中关于接受与飘然的章节。本文是个人阅读笔记与经验整理，不替代诊断和治疗。"
+    );
+  }
+
+  function renderSetbackNote() {
+    var body = [
+      '<section class="note-section">',
+      '<h2>身体会记得旧路</h2>',
+      '<p>神经系统敏感了一段时间后，疲劳、压力或一次突然的身体感觉，都可能把旧症状重新叫回来。它很像旧伤在阴雨天发酸。因为熟悉，反而格外容易把人吓住。</p>',
+      '<p>随后冒出来的判断更麻烦：“又来了，我肯定全回去了。”一句话，就把今天的一阵波动写成了未来全部的失败。这个结论来得太快。</p>',
+      "</section>",
+      '<section class="note-section">',
+      '<h2>走过的路还在脚下</h2>',
+      '<p>你认出过惊恐，陪它待过，也亲眼见过它变化。这些经验都还在。现在很难受，过去练出的东西也依然在。</p>',
+      '<blockquote class="personal-line">我以前都挺过去了，<br>这次也会的。</blockquote>',
+      '<p>这句话抓住的是一个已经发生过的事实：那些当时看起来撑不过去的时刻，后来都成了过去。今天也会给你留下一份新的经验。</p>',
+      "</section>",
+      '<section class="note-section note-questions">',
+      '<h2>阻碍来时，只看今天</h2>',
+      '<ol>',
+      '<li>今天是不是比平时更累、更忙，或受了刺激？</li>',
+      '<li>这是熟悉的一阵感觉，还是与以往明显不同？</li>',
+      '<li>除了害怕“又回去了”，眼前真正发生了什么？</li>',
+      "</ol>",
+      '<p>恢复没有百分比可打。今天只是今天。先让这一阵过去，再把生活接回来。路一直在。</p>',
+      "</section>",
+    ].join("");
+    return renderSimpleNote(
+      "《焦虑症的自救》 · 阻碍",
+      "又来了，<br>路还在",
+      "旧症状一回来，脑子很容易抢先宣布：完了，以前的努力全白费了。先别急着信。今天这一阵，抹不掉已经走过的路。",
+      body,
+      "阅读线索：克莱尔·威克斯《焦虑症的自救》中关于神经敏化、阻碍与重新找回信心的章节。本文是个人阅读笔记与经验整理，不替代诊断和治疗。"
+    );
+  }
+
+  function renderWorkbookGuide() {
+    var body = [
+      '<section class="note-section">',
+      '<h2>先找最卡住你的那一环</h2>',
+      '<p>这本书从身体、想法、行为、人际和日常生活几个方向拆解焦虑。内容很具体，也确实很多。一次只处理眼前最卡的一环，读起来会轻松得多。</p>',
+      '<p>先问自己：眼下最困扰我的是身体感觉、灾难化想法，还是因为害怕而躲着某个地方？选中一环，今天就有了入口。</p>',
+      "</section>",
+      '<section class="note-section note-route-list">',
+      '<h2>和惊恐最贴近的几章</h2>',
+      '<ul>',
+      '<li><strong>身体感觉把我吓住</strong><span>先看第 6 章“应对惊恐发作”。</span></li>',
+      '<li><strong>我开始躲地方、躲活动</strong><span>再看第 7 章“直面恐惧”。暴露练习要循序渐进，拿不准时和专业人员一起做。</span></li>',
+      '<li><strong>脑子总在预演最坏结果</strong><span>翻到第 8、9 章，看自我对话与错误信念。</span></li>',
+      '<li><strong>症状回来，我就觉得全完了</strong><span>第 20 章谈预防复发，也适合状态平稳时读。</span></li>',
+      "</ul>",
+      "</section>",
+      '<section class="note-section">',
+      '<h2>两本书放在一起</h2>',
+      '<p>《焦虑症的自救》先帮人站稳，记住面对、接受、飘然和等待。《焦虑症与恐惧症手册》把工具摊开，惊恐、暴露、自我对话、信念和复发预防都有对应的章节。</p>',
+      '<p>前一本给方向，后一本给工具。先拿走眼下用得上的部分，已经够了。</p>',
+      '<blockquote class="personal-line">今天先拿走一页。<br>余下的，以后再说。</blockquote>',
+      "</section>",
+    ].join("");
+    return renderSimpleNote(
+      "《焦虑症与恐惧症手册》 · 阅读导览",
+      "先翻到用得上的<br>那一页",
+      "它很厚。状态不好时，光看目录就像多了一摞作业。可以把它当成工具箱：今天卡在哪里，就先翻到哪里。",
+      body,
+      "阅读线索：艾德蒙·伯恩《焦虑症与恐惧症手册》（原书第 7 版）的公开目录。这篇是阅读导览，只说明怎样使用这本手册，不代替完整阅读或专业治疗。"
+    );
+  }
+
   function practiceOption() {
     return PRACTICE_OPTIONS[state.practiceFocus] || PRACTICE_OPTIONS.feet;
   }
@@ -601,8 +724,8 @@
       content = [
         '<header class="calm-tool__intro">',
         '<span class="eyebrow">平时练一小步</span>',
-        '<h1>不是练到不怕。<br>只练习先不处理。</h1>',
-        '<p>选一样此刻很轻、很普通的感觉。不诱发症状，也不用坚持。</p>',
+        '<h1>先看见它。<br>让处理慢一步。</h1>',
+        '<p>选一样此刻很轻、很普通的感觉。只看看它是什么样，随时可以停。</p>',
         "</header>",
         '<div class="practice-choices">',
         '<button type="button" data-action="practice-focus" data-focus="feet">脚底碰着地面</button>',
@@ -629,8 +752,8 @@
         '<span class="practice-result__mark" aria-hidden="true"></span>',
         '<p>你刚才注意到</p>',
         '<h1>“', escapeHtml(state.practiceQuality), '”</h1>',
-        '<p>你没有负责把它变成别的感觉，只是看见了它。这一小步练的不是放松，而是感觉出现时，先不急着服从警报。</p>',
-        '<blockquote>那又怎样？<br>它可以先在这里。</blockquote>',
+        '<p>你刚才让这个感觉保持原样，多看了它一会儿。这一小步练的是：感觉出现了，处理它的动作可以慢一点。</p>',
+        '<blockquote>那又怎样？<br>它先待着，我继续。</blockquote>',
         "</div>",
         '<div class="calm-tool__actions">',
         '<button class="primary-button" type="button" data-action="practice-restart">再练一个</button>',
@@ -669,7 +792,7 @@
         reflectionItem("后来实际发生", state.reflection.reality),
         reflectionItem("我想留给下次", state.reflection.next),
         "</div>",
-        '<p class="reflection-privacy">这不是成绩，也不会形成次数或时长记录。</p>',
+        '<p class="reflection-privacy">这里不打分，也不记录次数和时长。</p>',
         '<div class="calm-tool__actions">',
         '<button class="primary-button" type="button" data-action="reflection-reset">重新写一次</button>',
         '<button class="secondary-button" type="button" data-action="calm">回到平时</button>',
@@ -681,8 +804,8 @@
       '<section class="screen screen-scroll reflection-page">',
       innerPageNav("calm", "回到平时", "走过之后"),
       '<header class="reflection-page__intro">',
-      '<h1>不是复盘表现。<br>只看发生了什么。</h1>',
-      '<p>不用写完整。内容只留在这次打开里，不会保存成发作记录。</p>',
+      '<h1>把刚才发生的事<br>放在一起看。</h1>',
+      '<p>写一两句就够。内容只留在这次打开里，离开后就散了。</p>',
       "</header>",
       '<form class="reflection-form" id="reflection-form">',
       '<label><span>刚才最吓我的是什么？</span><textarea id="reflection-fear" maxlength="120" placeholder="一个感觉、念头或画面">', escapeHtml(state.reflection.fear), "</textarea></label>",
@@ -702,7 +825,7 @@
       flowNav("先看最响的一个", true),
       '<div class="screen-calm__body">',
       '<h1 class="choice-title">现在最抢注意力的是哪一种？</h1>',
-      '<p class="support-copy">不用找一个准确的名字。哪个最响，就先告诉我哪个。</p>',
+      '<p class="support-copy">名字可以很粗略。哪个最响，就先告诉我哪个。</p>',
       '<div class="choice-grid">',
       '<button class="choice-button" type="button" data-action="choose-need" data-need="heart"><span>心跳很快</span><small>身体反应很响</small></button>',
       '<button class="choice-button" type="button" data-action="choose-need" data-need="breath"><span>呼吸很乱</span><small>总觉得吸不够</small></button>',
@@ -722,7 +845,7 @@
         flowNav("先接住身体", true),
         '<div class="screen-calm__body">',
         '<h1 class="choice-title">你现在坐着，还是站着？</h1>',
-        '<p class="support-copy">不用改变姿势，先告诉我就好。</p>',
+        '<p class="support-copy">保持现在的姿势，先告诉我就好。</p>',
         '<div class="choice-row">',
         '<button class="choice-button" type="button" data-action="choose-position" data-position="sitting"><span>坐着</span></button>',
         '<button class="choice-button" type="button" data-action="choose-position" data-position="standing"><span>站着</span></button>',
@@ -743,7 +866,7 @@
       flowNav("先接住身体", true),
       '<div class="screen-calm__body">',
       '<h1 class="choice-title">', escapeHtml(instruction), "</h1>",
-      '<p class="support-copy">不用做到标准，只找一个接触点。</p>',
+      '<p class="support-copy">找到一个接触点就够了。</p>',
       '<div class="choice-row">',
       '<button class="choice-button" type="button" data-action="orient-ready"><span>碰到了</span></button>',
       '<button class="choice-button" type="button" data-action="orient-ready"><span>现在不方便</span></button>',
@@ -760,14 +883,14 @@
   }
 
   function renderAccept() {
-    var title = "不用赶走这些感觉。";
-    var copy = "先让熟悉的惊恐反应待在这儿。不需要立刻解决，也不需要现在就好起来。";
+    var title = "熟悉的感觉又来了。";
+    var copy = "认出它：哦，是你。来吧，老朋友。你可以待着，我也慢慢过这一分钟。";
     if (state.need === "heart") {
-      title = "心跳很响。先不替它下结论。";
-      copy = "让心脏自己跳一会儿，不用检查每一下，也不用现在证明身体发生了什么。";
+      title = "心跳很响。结论先放一放。";
+      copy = "让心脏自己跳一会儿。每一下都去检查会很累，先把注意力留给眼前。";
     } else if (state.need === "control") {
       title = "“会失控”是一个很吓人的念头。";
-      copy = "先把它当成一个念头，不把它当成命令。此刻只留意身体和什么东西接触着。";
+      copy = "先叫它一声“念头”。它很响，身体仍然可以找到一个接触点。";
     }
     var body = [
       '<h1 class="display-title">', escapeHtml(title), "</h1>",
@@ -789,7 +912,7 @@
   function renderLivedVoice() {
     return [
       '<aside class="lived-voice">',
-      '<span class="lived-voice__label">我以前也在这种时候，这样对自己说</span>',
+      '<span class="lived-voice__label">这时候，可以这样对自己说</span>',
       '<p class="lived-voice__word" id="lived-support-word">“',
       escapeHtml(currentSupportWord()),
       '”</p>',
@@ -800,11 +923,11 @@
 
   function renderBreathe() {
     var title = state.need === "breath"
-      ? "别吸满。只让一小口气进来。"
-      : "圆圈跟着你，不用你跟它。";
+      ? "这一口，小一点就好。"
+      : "圆圈跟着你的手。";
     var response = state.need === "breath"
-      ? "短短按住，再松开。让呼气自己慢下来。"
-      : "按住时吸，松开时呼。按多久都可以。";
+      ? "轻轻按住，吸一小口；松开，让呼气慢慢回来。"
+      : "按住时吸，松开时呼。你的手来定节奏。";
     var body = [
       '<div class="breathing-stage">',
       '<div class="breathing-orbit">',
@@ -865,7 +988,7 @@
     if (seconds >= 1200) {
       var phase = Math.floor((seconds - 1200) / 300) % 2;
       return phase === 0
-        ? "又有五分钟过去了。你不用证明什么，只是继续待在这里。"
+        ? "又有五分钟过去了。先陪眼前这一阵。"
         : "感觉可能一阵一阵。我们只过眼前这一阵。";
     }
     return message;
@@ -1004,8 +1127,8 @@
       '<h1 class="display-title">给现在的你</h1>',
       '<p class="words-intro">',
       usesDefaultWords
-        ? "这些不是临时拼出来的安慰。我也经历过惊恐，它们是我曾经真正说给自己的话。"
-        : "这是状态好时的你，真正留给现在的自己的话。如果做过卡片，现在也可以去相册找它。",
+        ? "这些话留给最难熬的这一阵。挑一句现在愿意相信的，让它陪你一会儿。"
+        : "状态好时的你，把这些话留给了现在。如果做过卡片，也可以去相册找它。",
       "</p>",
       '<ul class="words-list">',
       list,
@@ -1031,7 +1154,7 @@
       '<section class="screen screen-scroll">',
       innerPageNav("prepare-back", prepareBackLabel, "状态好时再写"),
       '<h1 class="page-title">现在的你，比发作时的你更清楚该说什么。</h1>',
-      '<p class="page-lead">写给那个时候的自己。想不到时，先借一个真实例子看看，再慢慢换成你自己的。</p>',
+      '<p class="page-lead">写给那个时候的自己。想不到时，可以先借我的记忆找找感觉，再换成你的。</p>',
       '<form class="prepare-form" id="prepare-form">',
       '<section class="form-section">',
       '<div class="form-section__heading"><h2>一个锚点</h2><span class="field-label">一眼能认出来</span></div>',
@@ -1039,7 +1162,7 @@
       '<label class="field-label" for="anchor">我的锚点</label>',
       '<input class="text-field" id="anchor" name="anchor" maxlength="16" value="', escapeHtml(draft.anchor), '" placeholder="例如：雨天的假山">',
       '<div class="example-block">',
-      '<span class="example-block__label">这是我的例子，不一定是你的</span>',
+      '<span class="example-block__label">先借我的记忆找找感觉</span>',
       '<div class="example-chips">',
       '<button class="example-chip" type="button" data-action="use-anchor-example" data-value="雨天的假山">雨天的假山</button>',
       '<button class="example-chip" type="button" data-action="use-anchor-example" data-value="第一次看见海">第一次看见海</button>',
@@ -1056,7 +1179,7 @@
       "</div>",
       '<p class="scene-preview" id="scene-preview">', escapeHtml(composeScene(draft)), "</p>",
       '<div class="scene-example">',
-      '<span class="example-block__label">这是我的一个真实例子</span>',
+      '<span class="example-block__label">我记得这样一幕</span>',
       '<p>我在雪天的公园湖边。空气很冷，雪在落。我能听见家人朋友在随便聊天。</p>',
       '<button type="button" data-action="use-scene-example">借这个例子试试&nbsp;→</button>',
       "</div>",
@@ -1115,23 +1238,26 @@
     return [
       '<section class="screen screen-scroll">',
       innerPageNav("understand-back", state.understandReturnRoute === "learn" ? "回到看懂它" : "回到首页", "先知道这些就够"),
-      '<h1 class="page-title">惊恐很响，解释可以很短。</h1>',
-      '<section class="info-section"><h2>这是什么</h2><p>惊恐发作像身体警报突然拉响：心跳变快、呼吸急、发麻或发晕都可能一起出现。感受很强，但仍要先排除身体原因。</p></section>',
-      '<section class="info-section"><h2>为什么越来越怕</h2><p>身体反应是一层；“这些感觉是不是危险”的担心又加一层。越盯着它、越想立刻赶走它，恐惧可能被继续放大。</p></section>',
-      '<section class="info-section"><h2>它会过去</h2><p>强烈感觉通常会自行缓下来，但每个人持续时间不同。不要拿十分钟当倒计时，也不必用时长证明自己做得好不好。</p></section>',
+      '<h1 class="page-title">惊恐很响。<br>可它常常<br>只是一只纸老虎。</h1>',
+      '<p class="page-lead understand-lead">纸老虎也能把人吓得发抖。心跳、窒息感、眩晕，还有“要出事了”的念头，全都很难受。你正在承受一阵很强的身体反应。矫情、意志薄弱，和这件事毫无关系。</p>',
+      '<section class="info-section"><h2>难受是真的，危险未必是真的</h2><p>惊恐像身体的警报突然拉响。如果这些反应已经就医排查过，你也熟悉它们，那么感觉很强烈，和眼前真的有危险是两回事。惊恐靠声势抢走了全部注意力。</p></section>',
+      '<section class="info-section"><h2>纸老虎越怕越响</h2><p>身体先响一声，脑子立刻追问：“是不是要出事？”接着反复检查、赶紧逃开、催它马上停。这些动作又在告诉身体：警报是对的，危险很近。第二层恐惧就这样把第一层反应越抬越高。你只是被这个循环卷进去了。</p></section>',
+      '<section class="info-section"><h2>老朋友又来了</h2><p>下一次惊恐露面，可以先认出它：“哦，是你。来吧，老朋友。你坐一会儿，我也留在这里。”欢迎它，能省下赶它出门的力气。</p><p>每次发作都给你一回练习机会。书能给方向，路还得亲自走。惊恐冲上来时，少检查一次，少逃一步，亲眼看着感觉怎样变化。要对付的是那道“它一来我就必须逃”的命令。</p><blockquote class="paper-tiger-line">克服惊恐，要把道理带进一次次发作里。<br>经验就在这些时刻慢慢攒起来。</blockquote></section>',
+      '<section class="info-section"><h2>把经验带走</h2><p>一次练习未必马上让感觉变轻。强烈感觉通常会缓下来，每个人走完这一阵的时间各不相同。十分钟只是数字，拿它给自己打分很吃亏。今天只少跟着警报跑一步，这一步也会留在脚下。</p></section>',
       '<section class="info-section">',
-      '<h2>五本可以慢慢读的书</h2>',
+      '<h2>可以慢慢读的书</h2>',
       '<ul class="book-list">',
       '<li><span class="book-title">《焦虑症的自救》</span><span class="book-copy">把“害怕这些感觉”这一层讲清楚，也给出面对、接受、飘然和等待这条路。</span></li>',
+      '<li><span class="book-title">《焦虑症与恐惧症手册》</span><span class="book-copy">更像一本工具箱。惊恐、暴露、自我对话和错误信念，可以按眼下最困扰你的部分去读、去练。</span></li>',
       '<li><span class="book-title">《直视骄阳》</span><span class="book-copy">当“会不会死”藏在恐慌后面，它帮你把这层怕放到桌面上看。</span></li>',
-      '<li><span class="book-title">《心湖上的倒影》</span><span class="book-copy">练习看见当下发生的念头，不急着评判，也不急着逃。</span></li>',
+      '<li><span class="book-title">《心湖上的倒影》</span><span class="book-copy">练习看见当下发生的念头，让评判和逃跑的冲动慢一点。</span></li>',
       '<li><span class="book-title">《世界上最快乐的人》</span><span class="book-copy">从觉察出发，理解身体感受和观察它的那个自己可以同时存在。</span></li>',
-      '<li><span class="book-title">《庄子》</span><span class="book-copy">不是控制变化，而是在变化里，试着少抓紧一点。</span></li>',
+      '<li><span class="book-title">《庄子》</span><span class="book-copy">变化本来就会来去，手可以慢慢松开一点。</span></li>',
       "</ul>",
-      '<p class="book-meta">更多在笔记里</p>',
+      '<button class="brief-link book-notes-link" type="button" data-action="open-learn"><span><strong>去读已经写好的笔记</strong><small>接受、阻碍，以及手册的阅读导览</small></span><span aria-hidden="true">→</span></button>',
       "</section>",
-      '<section class="info-section"><div class="medical-note"><strong>先把该排除的排除掉</strong><p>如果这是第一次出现，或伴随和以往不同的症状，请及时就医排除身体原因。这不是软弱，是把该排除的排除掉。</p></div></section>',
-      '<section class="info-section"><p>这是一个自助放松工具，不替代医生和心理咨询师。如果发作频繁、或已经影响到生活，请找专业帮助。</p></section>',
+      '<section class="info-section"><div class="medical-note"><strong>先把该排除的排除掉</strong><p>如果这是第一次出现，或伴随和以往不同的症状，请及时就医排除身体原因。去确认清楚，也是在照顾自己。</p></div></section>',
+      '<section class="info-section"><p>这里提供自助放松。诊断与治疗请交给医生和心理咨询师。发作频繁或已经影响生活时，专业帮助会更合适。</p></section>',
       "</section>",
     ].join("");
   }
@@ -1201,8 +1327,8 @@
       if (state.route !== "breathe") return;
       circle.classList.remove("is-touched");
       response.textContent = state.need === "breath"
-        ? "短短按住，再松开。让呼气自己慢下来。"
-        : "按住时吸，松开时呼。按多久都可以。";
+        ? "轻轻按住，吸一小口；松开，让呼气慢慢回来。"
+        : "按住时吸，松开时呼。你的手来定节奏。";
     }, 1600);
   }
 
@@ -1218,7 +1344,7 @@
     if (label) label.textContent = "吸";
     if (response) {
       response.textContent = state.need === "breath"
-        ? "只吸一点，不用把胸口装满。"
+        ? "只吸一点，给胸口留些余地。"
         : "圆圈正跟着你的手指长大。";
     }
   }
@@ -1232,7 +1358,7 @@
     var label = document.getElementById("breathing-label");
     var response = document.getElementById("breathing-response");
     if (label) label.textContent = "呼";
-    if (response) response.textContent = "松开就好。不用把气呼尽。";
+    if (response) response.textContent = "松开，让呼气自己走完。";
     breathingTimer = window.setTimeout(function () {
       if (state.route !== "breathe") return;
       control.classList.remove("is-releasing");
@@ -2215,6 +2341,7 @@
     } else if (action === "open-learn") {
       navigate("learn");
     } else if (action === "open-learn-article") {
+      state.learnNote = control.getAttribute("data-note") || "second-fear";
       state.learnLayer = "";
       navigate("learn-article");
     } else if (action === "learn-layer") {

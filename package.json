@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
-  "description": "一个在惊恐时陪你走几分钟、平静时陪你慢慢看懂它的离线自助工具。",
+  "description": "惊恐来了，陪你缓几分钟；平静时读懂一点，给下次留张卡。",
   "homepage": "https://shoot5313.github.io/anding-card/",
   "repository": {
     "type": "git",

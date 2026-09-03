@@ -141,6 +141,29 @@ async function run() {
   assert.ok(initialState.textActionHeight >= 44);
   assert.equal(initialState.plainTextBorder, "none");
 
+  const understandState = JSON.parse(await evaluate(sessionId, `(() => {
+    document.querySelector('[data-action=understand]').click();
+    const books = Array.from(document.querySelectorAll('.book-title'), (item) => item.textContent);
+    return JSON.stringify({
+      route: window.__ANDING_CARD__.getRoute(),
+      title: document.querySelector('.page-title').textContent,
+      lead: document.querySelector('.understand-lead').textContent,
+      books,
+      practiceLine: document.querySelector('.paper-tiger-line').textContent,
+      notesAction: document.querySelector('[data-action=open-learn]').textContent
+    });
+  })()`));
+  assert.equal(understandState.route, "understand");
+  assert.match(understandState.title, /纸老虎/);
+  assert.match(understandState.lead, /很难受/);
+  assert.equal(understandState.books[0], "《焦虑症的自救》");
+  assert.equal(understandState.books[1], "《焦虑症与恐惧症手册》");
+  assert.match(understandState.practiceLine, /一次次发作/);
+  assert.match(understandState.practiceLine, /经验就在这些时刻/);
+  assert.match(understandState.notesAction, /已经写好的笔记/);
+  await evaluate(sessionId, "document.querySelector('[data-action=understand-back]').click()");
+  assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "home");
+
   if (/^https?:\/\//.test(url)) {
     const pwaState = JSON.parse(await evaluate(sessionId, `(async () => {
       const registration = await Promise.race([
@@ -528,6 +551,7 @@ async function run() {
 
   await evaluate(sessionId, "document.querySelector('[data-action=open-learn]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "learn");
+  assert.equal(await evaluate(sessionId, "document.querySelectorAll('.note-card').length"), 3);
   await evaluate(sessionId, "document.querySelector('[data-action=open-learn-article]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "learn-article");
   const layerLearning = JSON.parse(await evaluate(sessionId, `(() => {
@@ -540,6 +564,18 @@ async function run() {
   })()`));
   assert.equal(layerLearning.pressed, "true");
   assert.match(layerLearning.copy, /第二声/);
+
+  await evaluate(sessionId, "document.querySelector('[data-action=open-learn]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-note=accept]').click()");
+  assert.match(await evaluate(sessionId, "document.querySelector('.note-article__header h1').textContent"), /来吧，老朋友/);
+  assert.match(await evaluate(sessionId, "document.querySelector('.personal-line').textContent"), /你可以在这里/);
+  await evaluate(sessionId, "document.querySelector('[data-action=open-learn]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-note=setback]').click()");
+  assert.match(await evaluate(sessionId, "document.querySelector('.note-article__header h1').textContent"), /路还在/);
+  await evaluate(sessionId, "document.querySelector('[data-action=open-learn]').click()");
+  await evaluate(sessionId, "document.querySelector('[data-note=workbook]').click()");
+  assert.match(await evaluate(sessionId, "document.querySelector('.note-article__header h1').textContent"), /用得上的/);
+  assert.equal(await evaluate(sessionId, "document.querySelectorAll('.note-route-list li').length"), 4);
 
   await evaluate(sessionId, "document.querySelector('[data-action=open-practice]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "practice");

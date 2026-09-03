@@ -27,9 +27,9 @@
 
 - [美国退伍军人事务部：PTSD Recovery Program Therapist Manual](https://www.mirecc.va.gov/docs/visn6/PTSD_Recovery_Group-Therapist_Manual_3rd_edition.pdf)：落地练习把注意力带到眼前环境，可通过描述看到、听到和触到的具体事物来完成。
 - [Frimley Health NHS Foundation Trust：Managing stress and anxiety](https://www.fhft.nhs.uk/patients-and-visitors/patient-information-library/managing-stress-and-anxiety/submit/7561)：焦虑较强时，可用需要更多注意力的外部任务，例如描述物体的形状、大小、纹理和颜色。
-- [西澳大利亚临床干预中心：Panic](https://cci.health.wa.gov.au/Resources/For-Clinicians/Panic)：惊恐相关的安全行为可能让问题延续，CBT 会逐步减少这些行为。
+- [西澳大利亚临床干预中心：Panic](https://www.cci.health.wa.gov.au/resources/looking-after-yourself/panic)：其惊恐自助手册说明，回避和安全行为可能让惊恐循环继续，并提供逐步面对情境、减少安全行为的练习。
 
-因此落地页要求用户真的去找、摸、听并说出答案，题目每次会变化。结束页也明确写清：工具只是陪伴，感觉仍在自己的时间里变化。产品不把“必须打开工具”塑造成熬过去的条件。
+因此落地页要求用户真的去找、摸、听并说出答案，题目每次会变化。“每次发作也是一次练习”具体落在安全环境中少检查一次、少逃一步，积累亲自看见感觉变化的经验，不写成必须扛住或必须完成好的任务。结束页也明确写清：工具只是陪伴，感觉仍在自己的时间里变化。产品不把“必须打开工具”塑造成熬过去的条件。
 
 ## 等待页的注意任务
 
@@ -40,6 +40,8 @@
 
 ## 个人阅读笔记
 
-「看懂它」中的第一篇内容参考克莱尔·威克斯《焦虑症的自救》，同时使用创作者实际用过的自我对话。书中的“第二层恐惧、接受、飘然、等待”被当作理解线索，不当作完整的医学解释。
+「看懂它」中关于第二层恐惧、接受和阻碍的三篇内容，参考克莱尔·威克斯《焦虑症的自救》以及创作者提供的划线和实际用过的自我对话。书中的“第二层恐惧、接受、飘然、等待”被当作理解线索，不当作完整的医学解释。
+
+《焦虑症与恐惧症手册》的第一篇内容目前只做阅读导览。章节信息核对自[重庆大学出版社第 7 版书目与目录](https://kepu.cqup.com.cn/index.php?a=show&c=index&catid=16&id=18134&m=content)以及[英文版出版社页面](https://www.newharbinger.com/9781648485572/the-anxiety-and-phobia-workbook/)，不把公开简介改写成创作者的亲读感受。
 
 书中关于心律、药物、治愈以及“所有问题都源于恐惧”等绝对表述，不直接进入产品。身体症状和专业治疗的边界仍以本页列出的官方资料为准。

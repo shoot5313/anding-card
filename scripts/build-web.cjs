@@ -18,7 +18,7 @@ const webHead = [
   '    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
   '    <meta property="og:type" content="website">',
   '    <meta property="og:title" content="缓一缓 · 它会过去">',
-  '    <meta property="og:description" content="发作时一次只做一件事；平静时，看懂它、练一小步，也可以为自己留一张卡片。">',
+  '    <meta property="og:description" content="惊恐来了，先缓一缓。一次只做一件事；平静时读点笔记，给下次留张卡。">',
   '    <meta property="og:image" content="https://shoot5313.github.io/anding-card/assets/icon-1024.png">',
   '    <link rel="canonical" href="https://shoot5313.github.io/anding-card/">',
   '    <link rel="manifest" href="./manifest.webmanifest">',
