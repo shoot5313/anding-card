@@ -1,22 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
   <title id="title">缓一缓图标</title>
-  <desc id="desc">浅绿色与雾蓝色背景上，一张带墨绿色呼吸圆的白色卡片。</desc>
+  <desc id="desc">深墨绿色与雾蓝色背景上，一张带呼吸圆的深色卡片。</desc>
   <defs>
     <linearGradient id="bg" x1="120" y1="80" x2="900" y2="950" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#D9EEE0"/>
-      <stop offset="1" stop-color="#E7EBF7"/>
+      <stop offset="0" stop-color="#19332C"/>
+      <stop offset="1" stop-color="#202A3B"/>
     </linearGradient>
     <radialGradient id="halo" cx="0" cy="0" r="1" gradientTransform="translate(512 453) rotate(90) scale(208)" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFFFFF" stop-opacity=".9"/>
-      <stop offset="1" stop-color="#748FC5" stop-opacity=".08"/>
+      <stop stop-color="#AEBFD9" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#AEBFD9" stop-opacity=".02"/>
     </radialGradient>
   </defs>
   <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
-  <rect x="226" y="154" width="572" height="716" rx="70" fill="#FFFEF9" stroke="#B9D2C3" stroke-width="7"/>
+  <rect x="226" y="154" width="572" height="716" rx="70" fill="#203A33" stroke="#77AB90" stroke-width="7"/>
   <circle cx="512" cy="453" r="208" fill="url(#halo)"/>
-  <ellipse cx="512" cy="453" rx="154" ry="146" fill="none" stroke="#748FC5" stroke-opacity=".42" stroke-width="7" transform="rotate(7 512 453)"/>
-  <circle cx="512" cy="453" r="117" fill="#397E60" stroke="#275F49" stroke-width="7"/>
-  <circle cx="690" cy="288" r="22" fill="#748FC5" fill-opacity=".82"/>
-  <path d="M397 679H627" stroke="#275F49" stroke-width="13" stroke-linecap="round"/>
-  <path d="M431 730H593" stroke="#748FC5" stroke-opacity=".72" stroke-width="13" stroke-linecap="round"/>
+  <ellipse cx="512" cy="453" rx="154" ry="146" fill="none" stroke="#AEBFD9" stroke-opacity=".54" stroke-width="7" transform="rotate(7 512 453)"/>
+  <circle cx="512" cy="453" r="117" fill="#376C53" stroke="#A7CBB8" stroke-width="7"/>
+  <circle cx="690" cy="288" r="22" fill="#AEBFD9" fill-opacity=".86"/>
+  <path d="M397 679H627" stroke="#F2EBDD" stroke-width="13" stroke-linecap="round"/>
+  <path d="M431 730H593" stroke="#AEBFD9" stroke-opacity=".8" stroke-width="13" stroke-linecap="round"/>
 </svg>

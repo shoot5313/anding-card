@@ -213,8 +213,9 @@ test("core CSS has old-WebView fallbacks and no touch-only dead ends", () => {
   assert.match(css, /\.wait-window[\s\S]*min-height: 64px/);
   assert.match(css, /\.quiet-link,[\s\S]*min-height: 44px/);
   assert.match(css, /\.fog-board[\s\S]*touch-action: none/);
-  assert.match(css, /--night: #f6faf4/);
-  assert.match(css, /--sea-glass-deep: #275f49/);
+  assert.match(css, /--night: #132823/);
+  assert.match(css, /--paper: #f2ebdd/);
+  assert.match(css, /--action: #376c53/);
   assert.match(css, /\.primary-button:disabled/);
 });
 

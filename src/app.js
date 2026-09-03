@@ -1670,9 +1670,9 @@
     if (!context) return;
     var random = seededFogRandom(seed);
     var palettes = [
-      { top: "#dcecf0", bottom: "#bddcc9", hill: "#79aa8b", line: "rgba(31,75,59,0.42)", soft: "rgba(116,143,197,0.34)" },
-      { top: "#ebe7f6", bottom: "#c9e2d2", hill: "#8ab497", line: "rgba(39,95,73,0.4)", soft: "rgba(116,143,197,0.3)" },
-      { top: "#d9edf2", bottom: "#d0dcef", hill: "#72a689", line: "rgba(31,75,59,0.4)", soft: "rgba(84,124,177,0.3)" },
+      { top: "#385260", bottom: "#416d5c", hill: "#5f8b70", line: "rgba(229,239,232,0.48)", soft: "rgba(190,202,231,0.42)" },
+      { top: "#49435e", bottom: "#436657", hill: "#658f75", line: "rgba(226,238,230,0.46)", soft: "rgba(185,198,229,0.4)" },
+      { top: "#344f59", bottom: "#424f6a", hill: "#56846b", line: "rgba(229,239,232,0.46)", soft: "rgba(172,194,224,0.4)" },
     ];
     var palette = palettes[seed % palettes.length];
     context.setTransform(scale, 0, 0, scale, 0, 0);
@@ -1686,8 +1686,8 @@
     var glowX = width * (0.18 + random() * 0.64);
     var glowY = height * (0.1 + random() * 0.22);
     var glow = context.createRadialGradient(glowX, glowY, 2, glowX, glowY, width * 0.34);
-    glow.addColorStop(0, "rgba(255,254,249,0.76)");
-    glow.addColorStop(1, "rgba(255,254,249,0)");
+    glow.addColorStop(0, "rgba(255,248,229,0.36)");
+    glow.addColorStop(1, "rgba(255,248,229,0)");
     context.fillStyle = glow;
     context.fillRect(0, 0, width, height);
 
@@ -1761,7 +1761,7 @@
       context.fill();
     }
 
-    context.strokeStyle = "rgba(255,254,249,0.48)";
+    context.strokeStyle = "rgba(255,248,229,0.46)";
     for (var arc = 0; arc < 4; arc += 1) {
       context.beginPath();
       context.arc(width * (0.58 + random() * 0.18), height * (0.19 + random() * 0.2), 8 + arc * 7, Math.PI * (0.15 + random() * 0.25), Math.PI * (1.1 + random() * 0.35));
@@ -1775,13 +1775,13 @@
     var random = seededFogRandom(seed + 937);
     context.setTransform(scale, 0, 0, scale, 0, 0);
     var mist = context.createLinearGradient(0, 0, width, height);
-    mist.addColorStop(0, "#e2ece7");
-    mist.addColorStop(0.5, "#d4e2dc");
-    mist.addColorStop(1, "#e6e8f1");
+    mist.addColorStop(0, "#294139");
+    mist.addColorStop(0.5, "#243b35");
+    mist.addColorStop(1, "#2c3548");
     context.fillStyle = mist;
     context.fillRect(0, 0, width, height);
     for (var index = 0; index < 38; index += 1) {
-      context.fillStyle = index % 2 === 0 ? "rgba(255,254,249,0.24)" : "rgba(67,130,99,0.08)";
+      context.fillStyle = index % 2 === 0 ? "rgba(229,239,232,0.12)" : "rgba(119,171,144,0.1)";
       context.beginPath();
       context.arc(random() * width, random() * height, 1 + random() * 3.5, 0, Math.PI * 2);
       context.fill();
@@ -2136,47 +2136,47 @@
       return wrapCanvasText(context, text, width).length;
     }
 
-    setText(canvasFont(titleSize, serif, 500), "#193f33");
+    setText(canvasFont(titleSize, serif, 500), "#f2ebdd");
     if (shouldDraw) context.fillText("给发作时的我", x, y);
     y += 92 * scale;
 
-    setText(canvasFont(29 * scale, sans, 600), "#4d7665");
+    setText(canvasFont(29 * scale, sans, 600), "#a7cbb8");
     if (shouldDraw) context.fillText("面对 · 接受 · 飘然 · 等它过去", x, y);
     y += 66 * scale;
 
     if (shouldDraw) {
-      context.fillStyle = "rgba(31,75,59,0.18)";
+      context.fillStyle = "rgba(190,211,200,0.24)";
       context.fillRect(x, y, maxWidth, Math.max(1, 2 * scale));
     }
     y += 42 * scale;
 
     function sectionLabel(label) {
-      setText(canvasFont(labelSize, sans, 600), "#4d7665");
+      setText(canvasFont(labelSize, sans, 600), "#a7cbb8");
       if (shouldDraw) context.fillText(label, x, y);
       y += labelLine;
     }
 
     sectionLabel("我的锚点");
-    setText(canvasFont(58 * scale, serif, 500), "#193f33");
+    setText(canvasFont(58 * scale, serif, 500), "#f2ebdd");
     if (shouldDraw) y = drawWrappedText(context, anchor, x, y, maxWidth, 76 * scale);
     else y += measureLines(anchor, maxWidth) * 76 * scale;
     y += sectionGap;
 
     sectionLabel("我熟悉的地方");
-    setText(canvasFont(bodySize, serif, 400), "#36594c");
+    setText(canvasFont(bodySize, serif, 400), "#c2d0c6");
     if (shouldDraw) y = drawWrappedText(context, scene, x, y, maxWidth, bodyLine);
     else y += measureLines(scene, maxWidth) * bodyLine;
     y += sectionGap;
 
     sectionLabel("我想对自己说");
-    setText(canvasFont(bodySize, serif, 400), "#193f33");
+    setText(canvasFont(bodySize, serif, 400), "#f2ebdd");
     words.forEach(function (word) {
       if (shouldDraw) {
-        context.fillStyle = "#438263";
+        context.fillStyle = "#77ab90";
         context.beginPath();
         context.arc(x + 8 * scale, y + 27 * scale, 5 * scale, 0, Math.PI * 2);
         context.fill();
-        context.fillStyle = "#193f33";
+        context.fillStyle = "#f2ebdd";
         y = drawWrappedText(context, word, x + 30 * scale, y, maxWidth - 30 * scale, bodyLine);
       } else {
         y += measureLines(word, maxWidth - 30 * scale) * bodyLine;
@@ -2186,7 +2186,7 @@
     y += 12 * scale;
 
     sectionLabel("到时可以做");
-    setText(canvasFont(actionSize, sans, 500), "#36594c");
+    setText(canvasFont(actionSize, sans, 500), "#c2d0c6");
     var rowHeight = 60 * scale;
     actions.forEach(function (action, index) {
       var column = index % 2;
@@ -2194,9 +2194,9 @@
       var actionX = x + column * 455;
       var actionY = y + row * rowHeight;
       if (shouldDraw) {
-        context.fillStyle = "#438263";
+        context.fillStyle = "#77ab90";
         context.fillText("·", actionX, actionY);
-        context.fillStyle = "#36594c";
+        context.fillStyle = "#c2d0c6";
         context.fillText(action, actionX + 25 * scale, actionY);
       }
     });
@@ -2212,19 +2212,19 @@
     if (!context) return "";
 
     var background = context.createLinearGradient(0, 0, CARD_WIDTH, CARD_HEIGHT);
-    background.addColorStop(0, "#f8fbf5");
-    background.addColorStop(0.55, "#e8f3ea");
-    background.addColorStop(1, "#e8edf7");
+    background.addColorStop(0, "#19332c");
+    background.addColorStop(0.55, "#132823");
+    background.addColorStop(1, "#202a3b");
     context.fillStyle = background;
     context.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
 
     var halo = context.createRadialGradient(880, 190, 0, 880, 190, 360);
-    halo.addColorStop(0, "rgba(116,143,197,0.26)");
-    halo.addColorStop(1, "rgba(116,143,197,0)");
+    halo.addColorStop(0, "rgba(174,191,217,0.2)");
+    halo.addColorStop(1, "rgba(174,191,217,0)");
     context.fillStyle = halo;
     context.fillRect(500, 0, 580, 600);
 
-    context.strokeStyle = "rgba(31,75,59,0.16)";
+    context.strokeStyle = "rgba(190,211,200,0.2)";
     context.lineWidth = 2;
     roundedRect(context, 58, 58, 964, 1804, 52);
     context.stroke();
@@ -2236,14 +2236,14 @@
     var scale = measuredBottom > available ? Math.max(0.84, available / measuredBottom) : 1;
     drawCardContent(context, draft, scale, true);
 
-    context.fillStyle = "rgba(31,75,59,0.18)";
+    context.fillStyle = "rgba(190,211,200,0.24)";
     context.fillRect(94, footerTop, 892, 2);
     context.textBaseline = "top";
     context.font = canvasFont(39, '"PingFang SC", "Microsoft YaHei", sans-serif', 500);
-    context.fillStyle = "#4d7665";
+    context.fillStyle = "#a7cbb8";
     context.fillText("写于 " + localDateString() + "，那天我状态很好", 94, footerTop + 38);
     context.font = canvasFont(44, '"Songti SC", "STSong", serif', 400);
-    context.fillStyle = "#36594c";
+    context.fillStyle = "#c2d0c6";
     context.fillText("我记得它退下去以后，胸口会重新平静。", 94, footerTop + 102);
     context.fillText("那个镇定、有勇气的自己也是真的。", 94, footerTop + 157);
     return canvas.toDataURL("image/png");
