@@ -63,7 +63,8 @@ test("the emergency route has active, focused stages and an always-available hum
   assert.match(app, /clearWaitFog/);
   assert.match(app, /context\.lineWidth = 96/);
   assert.doesNotMatch(app, /id="wait-trace-board"|getPointAtLength|followWaitTrace/);
-  assert.match(app, /我也经历过惊恐/);
+  assert.match(app, /你不用现在就好起来。按下去，我们一次只做一件事/);
+  assert.doesNotMatch(app, /<p class="home-note">我也经历过惊恐/);
   assert.match(app, /data-action="support-swap"/);
   assert.match(app, /再给我一句/);
   assert.match(app, /那又怎样？/);
@@ -94,6 +95,8 @@ test("the calm route has four useful branches without turning them into retentio
 test("time copy avoids promises the tool cannot make", () => {
   assert.match(app, /每个人的时程不同/);
   assert.match(app, /两种都可以/);
+  assert.match(app, /五本可以慢慢读的书/);
+  assert.match(app, /《焦虑症的自救》[\s\S]*面对、接受、飘然和等待/);
   assert.doesNotMatch(app, /你没事(?:的)?|十分钟。它开始退了|峰值通常在十分钟前后|每一次都会退/);
   assert.match(app, /Date\.now\(\)/);
   assert.match(app, /setInterval\(updateWaitClock, 1000\)/);
