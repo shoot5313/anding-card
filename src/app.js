@@ -12,7 +12,10 @@
   var suppressBreathingClick = false;
   var groundingAnimationTimer = null;
   var waitTimer = null;
-  var waitTraceFrame = null;
+  var waitActivityTimer = null;
+  var fogDrawing = false;
+  var fogLastPoint = null;
+  var fogDistance = 0;
   var cacheTimer = null;
   var navigating = false;
 
@@ -140,14 +143,13 @@
     { at: 900, text: "十五分钟。等你自己觉得可以了，再按“它退了”。" },
   ];
 
-  var TRACE_PATHS = [
-    "M20 98 C62 24 112 30 150 92 S238 170 300 86",
-    "M22 50 C70 138 108 150 150 74 S236 22 298 126",
-    "M20 112 C58 64 92 56 126 100 C162 146 198 142 228 88 C252 46 276 54 300 94",
-  ];
+  var WAIT_WINDOW_POSITIONS = ["左上", "右上", "左下", "右下"];
 
-  function randomTracePath() {
-    return TRACE_PATHS[Math.floor(Math.random() * TRACE_PATHS.length)];
+  function randomWaitWindowTarget(exclude) {
+    var choices = [0, 1, 2, 3].filter(function (index) {
+      return index !== exclude;
+    });
+    return choices[Math.floor(Math.random() * choices.length)];
   }
 
   var state = {
@@ -166,6 +168,9 @@
     waitAcknowledged: false,
     waitSupportIndex: -1,
     supportWordIndex: 0,
+    waitActivity: "windows",
+    waitWindowTarget: randomWaitWindowTarget(-1),
+    waitWindowRound: 0,
     learnLayer: "",
     practiceStep: 0,
     practiceFocus: "",
@@ -178,7 +183,6 @@
     },
     reflectionDone: false,
     reflectionStatus: "",
-    tracePath: randomTracePath(),
     draft: loadDraft(),
     cardDataUrl: "",
     cardSaved: false,
@@ -321,10 +325,13 @@
       window.clearInterval(waitTimer);
       waitTimer = null;
     }
-    if (waitTraceFrame) {
-      window.cancelAnimationFrame(waitTraceFrame);
-      waitTraceFrame = null;
+    if (waitActivityTimer) {
+      window.clearTimeout(waitActivityTimer);
+      waitActivityTimer = null;
     }
+    fogDrawing = false;
+    fogLastPoint = null;
+    fogDistance = 0;
   }
 
   function setAppHeight() {
@@ -365,7 +372,7 @@
   function flowNav(label, showDirectWords) {
     var direct = showDirectWords === false
       ? '<span aria-hidden="true"></span>'
-      : '<button class="quiet-link" type="button" data-action="words">直接看给我的话</button>';
+      : '<button class="quiet-link" type="button" data-action="words">直接看给我的话&nbsp;→</button>';
     return [
       '<div class="flow-nav">',
       '<span class="flow-nav__mark">',
@@ -392,7 +399,7 @@
       ">",
       escapeHtml(primaryLabel),
       "</button>",
-      secondary || (nextRoute ? '<button class="quiet-link" type="button" data-action="skip" data-next="' + escapeHtml(nextRoute) + '">跳过这步</button>' : ""),
+      secondary || (nextRoute ? '<button class="quiet-link" type="button" data-action="skip" data-next="' + escapeHtml(nextRoute) + '">跳过这步&nbsp;→</button>' : ""),
       "</div>",
       "</section>",
     ].join("");
@@ -412,7 +419,7 @@
       '<p class="home-note">我也经历过惊恐。现在不用读说明，按下去，一次只做一件事。</p>',
       '<div class="home__secondary">',
       '<button class="secondary-button" type="button" data-action="calm">我现在还好</button>',
-      '<button class="text-button" type="button" data-action="understand">先了解一下</button>',
+      '<button class="text-button" type="button" data-action="understand">先了解一下&nbsp;→</button>',
       "</div>",
       "</div>",
       "</section>",
@@ -443,22 +450,22 @@
       '<button class="calm-entry" type="button" data-action="open-learn">',
       '<span class="calm-entry__mark">理解</span>',
       '<span class="calm-entry__text"><strong>看懂它</strong><small>先从“为什么越怕越响”开始</small></span>',
-      '<span class="calm-entry__arrow" aria-hidden="true">→</span>',
+      '<span class="calm-entry__arrow" aria-hidden="true">打开&nbsp;→</span>',
       "</button>",
       '<button class="calm-entry" type="button" data-action="open-practice">',
       '<span class="calm-entry__mark">练习</span>',
       '<span class="calm-entry__text"><strong>平时练一小步</strong><small>练习看见感觉，不急着处理</small></span>',
-      '<span class="calm-entry__arrow" aria-hidden="true">→</span>',
+      '<span class="calm-entry__arrow" aria-hidden="true">打开&nbsp;→</span>',
       "</button>",
       '<button class="calm-entry" type="button" data-action="prepare">',
       '<span class="calm-entry__mark">准备</span>',
       '<span class="calm-entry__text"><strong>做自己的卡</strong><small>留下锚点、场景和真正相信的话</small></span>',
-      '<span class="calm-entry__arrow" aria-hidden="true">→</span>',
+      '<span class="calm-entry__arrow" aria-hidden="true">打开&nbsp;→</span>',
       "</button>",
       '<button class="calm-entry" type="button" data-action="open-reflection">',
       '<span class="calm-entry__mark">回看</span>',
       '<span class="calm-entry__text"><strong>走过之后想一想</strong><small>把“我以为”与“后来发生”放在一起</small></span>',
-      '<span class="calm-entry__arrow" aria-hidden="true">→</span>',
+      '<span class="calm-entry__arrow" aria-hidden="true">打开&nbsp;→</span>',
       "</button>",
       "</div>",
       '<p class="calm-hub__leave">不需要全部做完。看一页也算，随时可以离开。</p>',
@@ -608,7 +615,7 @@
       innerPageNav("calm", "回到平时", "不用做对"),
       content,
       state.practiceStep < 2
-        ? '<div class="practice-exit"><button type="button" data-action="practice-emergency">现在开始难受了</button><span>只在状态平稳时练；明显不适就停。</span></div>'
+        ? '<div class="practice-exit"><button class="quiet-link" type="button" data-action="practice-emergency">现在开始难受了&nbsp;→</button><span>只在状态平稳时练；明显不适就停。</span></div>'
         : "",
       "</section>",
     ].join("");
@@ -674,7 +681,7 @@
       '<button class="choice-button" type="button" data-action="choose-need" data-need="unreal"><span>周围不真实</span><small>像隔着一层</small></button>',
       '<button class="choice-button" type="button" data-action="choose-need" data-need="control"><span>怕会失控</span><small>怕自己撑不住</small></button>',
       "</div>",
-      '<button class="quiet-link choice-unclear" type="button" data-action="choose-need" data-need="unclear">说不清，直接陪我</button>',
+      '<button class="quiet-link choice-unclear" type="button" data-action="choose-need" data-need="unclear">说不清，直接陪我&nbsp;→</button>',
       "</div>",
       "</section>",
     ].join("");
@@ -692,7 +699,7 @@
         '<button class="choice-button" type="button" data-action="choose-position" data-position="sitting"><span>坐着</span></button>',
         '<button class="choice-button" type="button" data-action="choose-position" data-position="standing"><span>站着</span></button>',
         "</div>",
-        '<button class="quiet-link choice-unclear" type="button" data-action="choose-position" data-position="unclear">现在说不清</button>',
+        '<button class="quiet-link choice-unclear" type="button" data-action="choose-position" data-position="unclear">现在说不清&nbsp;→</button>',
         "</div>",
         "</section>",
       ].join("");
@@ -758,7 +765,7 @@
       '<p class="lived-voice__word" id="lived-support-word">“',
       escapeHtml(currentSupportWord()),
       '”</p>',
-      '<button class="lived-voice__swap" type="button" data-action="support-swap">换一句</button>',
+      '<button class="lived-voice__swap" type="button" data-action="support-swap">换一句&nbsp;↻</button>',
       "</aside>",
     ].join("");
   }
@@ -809,8 +816,8 @@
     ].join("");
     var secondary = [
       '<div class="grounding-secondary">',
-      '<button class="quiet-link" type="button" data-action="ground-swap" aria-label="当前任务不合适，换一个同类任务">换一个</button>',
-      '<button class="quiet-link" type="button" data-action="skip" data-next="wait">跳过这步</button>',
+      '<button class="quiet-link" type="button" data-action="ground-swap" aria-label="当前任务不合适，换一个同类任务">换一个&nbsp;↻</button>',
+      '<button class="quiet-link" type="button" data-action="skip" data-next="wait">跳过这步&nbsp;→</button>',
       "</div>",
     ].join("");
     return calmScreen("落地", body, step.button, "ground-next", "", secondary)
@@ -842,6 +849,51 @@
     return String(minutes).padStart(2, "0") + ":" + String(remainder).padStart(2, "0");
   }
 
+  function renderWaitWindows() {
+    var windows = WAIT_WINDOW_POSITIONS.map(function (position, index) {
+      var isLit = index === state.waitWindowTarget;
+      return [
+        '<button class="wait-window',
+        isLit ? " is-lit" : "",
+        '" type="button" data-action="wait-window" data-window="',
+        String(index),
+        '" aria-label="',
+        escapeHtml(position + "方的窗" + (isLit ? "，现在亮着" : "")),
+        '">',
+        '<span class="wait-window__pane" aria-hidden="true"><span></span></span>',
+        "</button>",
+      ].join("");
+    }).join("");
+    return [
+      '<div class="wait-activity wait-windows" id="wait-activity">',
+      '<p class="wait-activity__prompt">看哪一扇窗慢慢亮起来，点那一整格。</p>',
+      '<div class="wait-window-grid" id="wait-window-grid">', windows, "</div>",
+      '<p class="wait-activity__status" id="wait-activity-status" aria-live="polite">不用抢。亮着的那扇会等你。</p>',
+      "</div>",
+    ].join("");
+  }
+
+  function renderWaitFog() {
+    return [
+      '<div class="wait-activity wait-fog" id="wait-activity">',
+      '<p class="wait-activity__prompt">手指放在哪里都可以，慢慢擦开一小片。</p>',
+      '<button class="fog-board" id="wait-fog-board" type="button" data-action="fog-reveal" aria-describedby="wait-activity-status" aria-label="擦开雾气。按住并移动手指，或按空格擦开中间一片">',
+      '<span class="fog-scene" aria-hidden="true">',
+      '<span class="fog-horizon"></span>',
+      '<span class="fog-ripple fog-ripple--one"></span>',
+      '<span class="fog-ripple fog-ripple--two"></span>',
+      "</span>",
+      '<canvas id="wait-fog-canvas" aria-hidden="true"></canvas>',
+      "</button>",
+      '<p class="wait-activity__status" id="wait-activity-status" aria-live="polite">不用擦完整。手指走过的地方会留下来。</p>',
+      "</div>",
+    ].join("");
+  }
+
+  function renderWaitActivity() {
+    return state.waitActivity === "fog" ? renderWaitFog() : renderWaitWindows();
+  }
+
   function renderWait() {
     if (!state.waitStartedAt) state.waitStartedAt = Date.now();
     var seconds = elapsedWaitSeconds();
@@ -855,15 +907,7 @@
       ' 秒">',
       formatElapsed(seconds),
       "</span></div>",
-      '<div class="trace-board" id="wait-trace-board" role="group" aria-label="用手指跟随缓慢移动的亮点">',
-      '<svg class="wait-trace" viewBox="0 0 320 190" aria-hidden="true">',
-      '<path class="wait-trace__base" id="wait-trace-path" d="', escapeHtml(state.tracePath), '"></path>',
-      '<path class="wait-trace__lived" id="wait-trace-lived" d="', escapeHtml(state.tracePath), '"></path>',
-      '<circle class="wait-trace__lead" id="wait-trace-lead" cx="20" cy="98" r="7"></circle>',
-      '<circle class="wait-trace__finger" id="wait-trace-finger" cx="20" cy="98" r="11"></circle>',
-      "</svg>",
-      '<p class="trace-hint" id="wait-trace-copy" aria-live="polite">用手指跟着亮点走。跟丢也没关系。</p>',
-      "</div>",
+      renderWaitActivity(),
       "</div>",
       recentAnswers ? '<p class="grounding-recall">刚才你真的找到过：' + escapeHtml(recentAnswers) + "</p>" : "",
       '<h1 class="wait-copy" id="wait-copy">',
@@ -873,8 +917,14 @@
       state.waitAcknowledged ? escapeHtml(currentWaitSupportMessage()) : "",
       "</p>",
     ].join("");
-    var secondary = '<button class="quiet-link" type="button" data-action="wait-more">再给我一句</button>';
-    return calmScreen("让时间过去", body, "它退了", "wait-done", "", secondary);
+    var secondary = [
+      '<div class="wait-action-row">',
+      '<button class="quiet-link" type="button" data-action="wait-switch" aria-label="换一种等待时的小活动">换一种&nbsp;↻</button>',
+      '<button class="quiet-link" type="button" data-action="wait-more">再给我一句&nbsp;→</button>',
+      "</div>",
+    ].join("");
+    return calmScreen("让时间过去", body, "它退了", "wait-done", "", secondary)
+      .replace("screen screen-calm", "screen screen-calm screen-wait");
   }
 
   function waitSupportMessages() {
@@ -922,7 +972,7 @@
       '<p>惊恐退下去后，胸口像岩浆起伏后终于归于平静。那个镇定、有勇气的自己也是真的。</p>',
       "</aside>",
     ].join("");
-    var secondary = '<button class="quiet-link" type="button" data-action="wait-again">再陪我等一会儿</button>';
+    var secondary = '<button class="quiet-link" type="button" data-action="wait-again">再陪我等一会儿&nbsp;→</button>';
     return calmScreen("你的话", body, "回到开头", "home", "", secondary, false)
       .replace("screen screen-calm", "screen screen-calm screen-words");
   }
@@ -965,7 +1015,7 @@
       '<div class="scene-example">',
       '<span class="example-block__label">这是我的一个真实例子</span>',
       '<p>我在雪天的公园湖边。空气很冷，雪在落。我能听见家人朋友在随便聊天。</p>',
-      '<button type="button" data-action="use-scene-example">借这个例子试试</button>',
+      '<button type="button" data-action="use-scene-example">借这个例子试试&nbsp;→</button>',
       "</div>",
       "</section>",
       '<section class="form-section">',
@@ -1263,59 +1313,163 @@
   function startWaitClock() {
     updateWaitClock();
     waitTimer = window.setInterval(updateWaitClock, 1000);
-    startWaitTrace();
+    startWaitActivity();
   }
 
-  function startWaitTrace() {
-    var path = document.getElementById("wait-trace-path");
-    var lived = document.getElementById("wait-trace-lived");
-    var lead = document.getElementById("wait-trace-lead");
-    if (!path || !lived || !lead) return;
-    var length = path.getTotalLength();
-    lived.style.strokeDasharray = String(length);
+  function startWaitActivity() {
+    if (state.waitActivity === "fog") {
+      initializeWaitFog();
+      return;
+    }
+    if (state.waitWindowTarget < 0) state.waitWindowTarget = randomWaitWindowTarget(-1);
+    updateWaitWindows();
+  }
 
-    function drawTrace() {
-      if (state.route !== "wait") return;
-      var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      var phase = reduceMotion ? 0.52 : ((Date.now() - state.waitStartedAt) % 18000) / 18000;
-      var point = path.getPointAtLength(length * phase);
-      lead.setAttribute("cx", String(point.x));
-      lead.setAttribute("cy", String(point.y));
-      lived.style.strokeDashoffset = String(length * (1 - phase));
-      if (!reduceMotion) waitTraceFrame = window.requestAnimationFrame(drawTrace);
+  function updateWaitWindows() {
+    var buttons = document.querySelectorAll('[data-action="wait-window"]');
+    Array.prototype.forEach.call(buttons, function (button) {
+      var index = Number(button.getAttribute("data-window"));
+      var isLit = index === state.waitWindowTarget;
+      button.classList.toggle("is-lit", isLit);
+      button.classList.remove("is-received");
+      button.setAttribute("aria-label", WAIT_WINDOW_POSITIONS[index] + "方的窗" + (isLit ? "，现在亮着" : ""));
+    });
+  }
+
+  function chooseWaitWindow(control) {
+    if (state.route !== "wait" || state.waitActivity !== "windows" || state.waitWindowTarget < 0) return;
+    var chosen = Number(control.getAttribute("data-window"));
+    var status = document.getElementById("wait-activity-status");
+    if (chosen !== state.waitWindowTarget) {
+      if (status) status.textContent = "再看一眼。亮着的那扇还在等你。";
+      return;
     }
 
-    drawTrace();
+    var previous = state.waitWindowTarget;
+    var receivedMessages = [
+      "接住了。下一扇会自己亮起来。",
+      "看见了。再等一扇慢慢亮起来。",
+      "就在这里。下一扇不着急。",
+    ];
+    state.waitWindowRound += 1;
+    state.waitWindowTarget = -1;
+    control.classList.remove("is-lit");
+    control.classList.add("is-received");
+    if (status) status.textContent = receivedMessages[(state.waitWindowRound - 1) % receivedMessages.length];
+    if (waitActivityTimer) window.clearTimeout(waitActivityTimer);
+    waitActivityTimer = window.setTimeout(function () {
+      waitActivityTimer = null;
+      if (state.route !== "wait" || state.waitActivity !== "windows") return;
+      state.waitWindowTarget = randomWaitWindowTarget(previous);
+      updateWaitWindows();
+    }, 680);
   }
 
-  function followWaitTrace(event) {
-    if (state.route !== "wait") return;
-    var board = document.getElementById("wait-trace-board");
-    var svg = board ? board.querySelector("svg") : null;
-    var lead = document.getElementById("wait-trace-lead");
-    var finger = document.getElementById("wait-trace-finger");
-    var copy = document.getElementById("wait-trace-copy");
-    if (!board || !svg || !lead || !finger || !copy) return;
+  function initializeWaitFog() {
+    var canvas = document.getElementById("wait-fog-canvas");
+    var board = document.getElementById("wait-fog-board");
+    if (!canvas || !board) return;
+    var width = Math.max(1, Math.round(board.clientWidth));
+    var height = Math.max(1, Math.round(board.clientHeight));
+    var scale = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    var context = canvas.getContext("2d");
+    if (!context) return;
+    context.setTransform(scale, 0, 0, scale, 0, 0);
+    var mist = context.createLinearGradient(0, 0, width, height);
+    mist.addColorStop(0, "#303537");
+    mist.addColorStop(0.52, "#252a2c");
+    mist.addColorStop(1, "#343533");
+    context.fillStyle = mist;
+    context.fillRect(0, 0, width, height);
+    for (var index = 0; index < 18; index += 1) {
+      context.fillStyle = index % 2 === 0 ? "rgba(235,230,219,0.025)" : "rgba(130,154,145,0.025)";
+      context.beginPath();
+      context.arc((index * 53 + 19) % width, (index * 31 + 17) % height, 1 + index % 3, 0, Math.PI * 2);
+      context.fill();
+    }
+    fogDrawing = false;
+    fogLastPoint = null;
+    fogDistance = 0;
+  }
+
+  function waitFogPoint(event, board) {
+    var source = event.touches && event.touches[0] ? event.touches[0] : event;
+    if (typeof source.clientX !== "number" || typeof source.clientY !== "number") return null;
+    var bounds = board.getBoundingClientRect();
+    return { x: source.clientX - bounds.left, y: source.clientY - bounds.top };
+  }
+
+  function clearWaitFog(point, previous) {
+    var canvas = document.getElementById("wait-fog-canvas");
+    if (!canvas || !point) return;
+    var context = canvas.getContext("2d");
+    if (!context) return;
+    context.save();
+    context.globalCompositeOperation = "destination-out";
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.lineWidth = 96;
+    context.beginPath();
+    if (previous) context.moveTo(previous.x, previous.y);
+    else context.moveTo(point.x, point.y);
+    context.lineTo(point.x, point.y);
+    context.stroke();
+    context.beginPath();
+    context.arc(point.x, point.y, 48, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+
+    if (previous) {
+      fogDistance += Math.sqrt(Math.pow(point.x - previous.x, 2) + Math.pow(point.y - previous.y, 2));
+    } else {
+      fogDistance += 48;
+    }
+    var status = document.getElementById("wait-activity-status");
+    if (!status) return;
+    if (fogDistance > 520) status.textContent = "已经擦开一片了。还想继续，就慢慢继续。";
+    else if (fogDistance > 170) status.textContent = "下面的水纹露出来了。手指可以走得很慢。";
+  }
+
+  function beginWaitFog(event, board) {
+    if (state.route !== "wait" || state.waitActivity !== "fog") return;
     if (event.cancelable) event.preventDefault();
-    var point = event.touches && event.touches[0] ? event.touches[0] : event;
-    if (typeof point.clientX !== "number" || typeof point.clientY !== "number") return;
-    var svgPoint = svg.createSVGPoint();
-    svgPoint.x = point.clientX;
-    svgPoint.y = point.clientY;
-    var localPoint = svgPoint.matrixTransform(svg.getScreenCTM().inverse());
-    var x = localPoint.x;
-    var y = localPoint.y;
-    finger.setAttribute("cx", String(x));
-    finger.setAttribute("cy", String(y));
-    finger.classList.add("is-visible");
-    var leadX = Number(lead.getAttribute("cx"));
-    var leadY = Number(lead.getAttribute("cy"));
-    var distance = Math.sqrt(Math.pow(x - leadX, 2) + Math.pow(y - leadY, 2));
-    var isFollowing = distance < 34;
-    board.classList.toggle("is-following", isFollowing);
-    copy.textContent = isFollowing
-      ? "就这样。跟丢了，再找到它就好。"
-      : "慢慢找亮点。没有跟上也没关系。";
+    fogDrawing = true;
+    fogLastPoint = null;
+    if (window.PointerEvent && typeof board.setPointerCapture === "function" && typeof event.pointerId === "number") {
+      try {
+        board.setPointerCapture(event.pointerId);
+      } catch (error) {
+        fogDrawing = true;
+      }
+    }
+    var point = waitFogPoint(event, board);
+    clearWaitFog(point, null);
+    fogLastPoint = point;
+  }
+
+  function continueWaitFog(event, board) {
+    if (!fogDrawing || state.route !== "wait" || state.waitActivity !== "fog") return;
+    if (event.cancelable) event.preventDefault();
+    var point = waitFogPoint(event, board);
+    if (!point) return;
+    clearWaitFog(point, fogLastPoint);
+    fogLastPoint = point;
+  }
+
+  function endWaitFog() {
+    fogDrawing = false;
+    fogLastPoint = null;
+  }
+
+  function revealFogForKeyboard() {
+    var board = document.getElementById("wait-fog-board");
+    if (!board) return;
+    var center = { x: board.clientWidth / 2, y: board.clientHeight / 2 };
+    clearWaitFog(center, { x: center.x - 70, y: center.y + 18 });
   }
 
   function updateGroundingStep() {
@@ -1673,17 +1827,17 @@
       ? event.target.closest('[data-action="breath-touch"]')
       : null;
     if (breathControl) beginBreathHold(breathControl);
-    var traceBoard = event.target && event.target.closest
-      ? event.target.closest("#wait-trace-board")
+    var fogBoard = event.target && event.target.closest
+      ? event.target.closest("#wait-fog-board")
       : null;
-    if (traceBoard) followWaitTrace(event);
+    if (fogBoard) beginWaitFog(event, fogBoard);
   }
 
   function handleInteractionMove(event) {
-    var traceBoard = event.target && event.target.closest
-      ? event.target.closest("#wait-trace-board")
+    var fogBoard = event.target && event.target.closest
+      ? event.target.closest("#wait-fog-board")
       : null;
-    if (traceBoard) followWaitTrace(event);
+    if (fogBoard) continueWaitFog(event, fogBoard);
   }
 
   function resetPractice() {
@@ -1729,7 +1883,9 @@
     state.waitAcknowledged = false;
     state.waitSupportIndex = -1;
     state.supportWordIndex = 0;
-    state.tracePath = randomTracePath();
+    state.waitActivity = "windows";
+    state.waitWindowTarget = randomWaitWindowTarget(-1);
+    state.waitWindowRound = 0;
   }
 
   app.addEventListener("click", function (event) {
@@ -1846,6 +2002,16 @@
         if (!state.waitStartedAt) state.waitStartedAt = Date.now();
         navigate("wait");
       }
+    } else if (action === "wait-window") {
+      chooseWaitWindow(control);
+    } else if (action === "wait-switch") {
+      state.waitActivity = state.waitActivity === "windows" ? "fog" : "windows";
+      if (state.waitActivity === "windows") {
+        state.waitWindowTarget = randomWaitWindowTarget(state.waitWindowTarget);
+      }
+      navigate("wait", true);
+    } else if (action === "fog-reveal") {
+      if (event.detail === 0) revealFogForKeyboard();
     } else if (action === "wait-more") {
       state.waitAcknowledged = true;
       state.waitSupportIndex += 1;
@@ -1928,8 +2094,14 @@
   var interactionEndEvent = window.PointerEvent ? "pointerup" : "touchend";
   app.addEventListener(interactionStartEvent, handleInteractionStart);
   app.addEventListener(interactionMoveEvent, handleInteractionMove);
-  document.addEventListener(interactionEndEvent, endBreathHold);
-  if (window.PointerEvent) document.addEventListener("pointercancel", endBreathHold);
+  document.addEventListener(interactionEndEvent, function () {
+    endBreathHold();
+    endWaitFog();
+  });
+  if (window.PointerEvent) document.addEventListener("pointercancel", function () {
+    endBreathHold();
+    endWaitFog();
+  });
   document.addEventListener(interactionStartEvent, addTouchEcho);
 
   document.addEventListener("visibilitychange", function () {

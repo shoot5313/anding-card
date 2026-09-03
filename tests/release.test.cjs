@@ -56,8 +56,13 @@ test("the emergency route has active, focused stages and an always-available hum
   assert.match(app, /id="ground-answer"/);
   assert.match(app, /groundAnswers/);
   assert.match(app, /刚才你真的找到过：/);
-  assert.match(app, /id="wait-trace-board"/);
-  assert.match(app, /getPointAtLength/);
+  assert.match(app, /data-action="wait-window"/);
+  assert.match(app, /WAIT_WINDOW_POSITIONS/);
+  assert.match(app, /data-action="wait-switch"/);
+  assert.match(app, /id="wait-fog-canvas"/);
+  assert.match(app, /clearWaitFog/);
+  assert.match(app, /context\.lineWidth = 96/);
+  assert.doesNotMatch(app, /id="wait-trace-board"|getPointAtLength|followWaitTrace/);
   assert.match(app, /我也经历过惊恐/);
   assert.match(app, /data-action="support-swap"/);
   assert.match(app, /再给我一句/);
@@ -150,6 +155,9 @@ test("core CSS has old-WebView fallbacks and no touch-only dead ends", () => {
   assert.doesNotMatch(css, /\b(?:dvh|svh|lvh)\b/);
   assert.match(css, /button:focus/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(css, /\.wait-window[\s\S]*min-height: 64px/);
+  assert.match(css, /\.quiet-link,[\s\S]*min-height: 44px/);
+  assert.match(css, /\.fog-board[\s\S]*touch-action: none/);
 });
 
 test("release sources are comfortably below the upload ceiling", () => {

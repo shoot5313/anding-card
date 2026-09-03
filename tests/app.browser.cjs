@@ -123,7 +123,10 @@ async function run() {
     webInstall: Boolean(document.querySelector('[data-web-action=install]')),
     brand: document.querySelector('.home-title').textContent,
     subtitle: document.querySelector('.home-subtitle').textContent,
-    calmLabel: document.querySelector('[data-action=calm]').textContent
+    calmLabel: document.querySelector('[data-action=calm]').textContent,
+    textActionBorder: getComputedStyle(document.querySelector('[data-action=understand]')).borderTopStyle,
+    textActionHeight: document.querySelector('[data-action=understand]').getBoundingClientRect().height,
+    plainTextBorder: getComputedStyle(document.querySelector('.home-note')).borderTopStyle
   })`);
   const initialState = JSON.parse(initial);
   assert.equal(initialState.route, "home");
@@ -134,6 +137,9 @@ async function run() {
   assert.equal(initialState.brand, "缓一缓");
   assert.equal(initialState.subtitle, "它会过去");
   assert.equal(initialState.calmLabel, "我现在还好");
+  assert.equal(initialState.textActionBorder, "solid");
+  assert.ok(initialState.textActionHeight >= 44);
+  assert.equal(initialState.plainTextBorder, "none");
 
   if (/^https?:\/\//.test(url)) {
     const pwaState = JSON.parse(await evaluate(sessionId, `(async () => {
@@ -273,24 +279,63 @@ async function run() {
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "wait");
   assert.match(await evaluate(sessionId, "document.querySelector('#wait-timer').textContent"), /^00:0[01]$/);
   assert.match(await evaluate(sessionId, "document.querySelector('.grounding-recall').textContent"), /窗框/);
-  const traceState = JSON.parse(await evaluate(sessionId, `(() => {
-    const svg = document.querySelector('.wait-trace');
-    const lead = document.querySelector('#wait-trace-lead');
-    const point = svg.createSVGPoint();
-    point.x = Number(lead.getAttribute('cx'));
-    point.y = Number(lead.getAttribute('cy'));
-    const screenPoint = point.matrixTransform(svg.getScreenCTM());
-    const board = document.querySelector('#wait-trace-board');
-    board.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'touch', clientX: screenPoint.x, clientY: screenPoint.y }));
+  const windowState = JSON.parse(await evaluate(sessionId, `(() => {
+    const windows = Array.from(document.querySelectorAll('[data-action=wait-window]'));
+    const lit = document.querySelector('.wait-window.is-lit');
+    const other = document.querySelector('.wait-window:not(.is-lit)');
+    const before = lit.getAttribute('data-window');
+    other.click();
+    const patientCopy = document.querySelector('#wait-activity-status').textContent;
+    lit.click();
+    return JSON.stringify({ count: windows.length, before, patientCopy });
+  })()`));
+  assert.equal(windowState.count, 4);
+  assert.match(windowState.patientCopy, /还在等你/);
+  await evaluate(sessionId, "new Promise((resolve) => setTimeout(resolve, 760))");
+  const nextWindow = JSON.parse(await evaluate(sessionId, `(() => {
+    const lit = document.querySelector('.wait-window.is-lit');
     return JSON.stringify({
-      finger: document.querySelector('#wait-trace-finger').classList.contains('is-visible'),
-      following: board.classList.contains('is-following'),
-      copy: document.querySelector('#wait-trace-copy').textContent
+      target: lit.getAttribute('data-window'),
+      label: lit.getAttribute('aria-label'),
+      status: document.querySelector('#wait-activity-status').textContent,
+      minWidth: lit.getBoundingClientRect().width,
+      minHeight: lit.getBoundingClientRect().height
     });
   })()`));
-  assert.equal(traceState.finger, true);
-  assert.equal(traceState.following, true);
-  assert.match(traceState.copy, /就这样/);
+  assert.notEqual(nextWindow.target, windowState.before);
+  assert.match(nextWindow.label, /现在亮着/);
+  assert.match(nextWindow.status, /下一扇/);
+  assert.ok(nextWindow.minWidth >= 100);
+  assert.ok(nextWindow.minHeight >= 56);
+
+  await evaluate(sessionId, "document.querySelector('[data-action=wait-switch]').click()");
+  const fogState = JSON.parse(await evaluate(sessionId, `(() => {
+    const board = document.querySelector('#wait-fog-board');
+    const canvas = document.querySelector('#wait-fog-canvas');
+    const bounds = board.getBoundingClientRect();
+    const x = bounds.left + bounds.width / 2;
+    const y = bounds.top + bounds.height / 2;
+    board.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', pointerId: 9, clientX: x, clientY: y }));
+    board.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'touch', pointerId: 9, clientX: x + 110, clientY: y + 8 }));
+    board.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'touch', pointerId: 9, clientX: x - 95, clientY: y + 20 }));
+    document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch', pointerId: 9, clientX: x - 95, clientY: y + 20 }));
+    const alpha = canvas.getContext('2d').getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1).data[3];
+    return JSON.stringify({
+      alpha,
+      display: getComputedStyle(canvas).display,
+      status: document.querySelector('#wait-activity-status').textContent,
+      boardWidth: bounds.width,
+      boardHeight: bounds.height
+    });
+  })()`));
+  assert.equal(fogState.alpha, 0);
+  assert.equal(fogState.display, "block");
+  assert.match(fogState.status, /水纹|擦开/);
+  assert.ok(fogState.boardWidth >= 280);
+  assert.ok(fogState.boardHeight >= 100);
+
+  await evaluate(sessionId, "document.querySelector('[data-action=wait-switch]').click()");
+  assert.equal(await evaluate(sessionId, "document.querySelectorAll('[data-action=wait-window]').length"), 4);
   const waitFits = await evaluate(sessionId, `(() => {
     const copy = document.querySelector('#wait-copy').getBoundingClientRect();
     const button = document.querySelector('.calm-actions .primary-button').getBoundingClientRect();
@@ -310,6 +355,41 @@ async function run() {
   assert.match(waitSupport.first, /那又怎样/);
   assert.notEqual(waitSupport.second, waitSupport.first);
   assert.equal(waitSupport.fits, true);
+
+  await send("Emulation.setDeviceMetricsOverride", {
+    width: 360,
+    height: 640,
+    deviceScaleFactor: 2,
+    mobile: true,
+    screenWidth: 360,
+    screenHeight: 640,
+  }, sessionId);
+  await evaluate(sessionId, "new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+  const compactWait = JSON.parse(await evaluate(sessionId, `(() => {
+    const acknowledgement = document.querySelector('#wait-acknowledgement').getBoundingClientRect();
+    const primary = document.querySelector('.calm-actions .primary-button').getBoundingClientRect();
+    const secondary = document.querySelector('.wait-action-row').getBoundingClientRect();
+    const footer = document.querySelector('.boundary-footer').getBoundingClientRect();
+    return JSON.stringify({
+      width: document.documentElement.scrollWidth,
+      viewport: innerWidth,
+      contentGap: primary.top - acknowledgement.bottom,
+      actionGap: footer.top - secondary.bottom
+    });
+  })()`));
+  assert.equal(compactWait.width, compactWait.viewport);
+  assert.ok(compactWait.contentGap >= 8);
+  assert.ok(compactWait.actionGap >= 8);
+  await send("Emulation.setDeviceMetricsOverride", {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 2,
+    mobile: true,
+    screenWidth: 390,
+    screenHeight: 844,
+  }, sessionId);
+  await evaluate(sessionId, "new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+
   await evaluate(sessionId, "document.querySelector('[data-action=wait-done]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "words");
   const wordsFit = await evaluate(sessionId, `(() => {
@@ -323,6 +403,8 @@ async function run() {
   await evaluate(sessionId, "document.querySelector('[data-action=calm]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "calm");
   assert.equal(await evaluate(sessionId, "document.querySelectorAll('.calm-entry').length"), 4);
+  assert.equal(await evaluate(sessionId, "document.querySelectorAll('.calm-entry__arrow').length"), 4);
+  assert.match(await evaluate(sessionId, "document.querySelector('.calm-entry__arrow').textContent"), /打开/);
 
   await evaluate(sessionId, "document.querySelector('[data-action=open-learn]').click()");
   assert.equal(await evaluate(sessionId, "window.__ANDING_CARD__.getRoute()"), "learn");
