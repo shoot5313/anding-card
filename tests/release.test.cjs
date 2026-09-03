@@ -58,7 +58,8 @@ test("the emergency route has active, focused stages and an always-available hum
   assert.match(app, /data-action="ground-swap"/);
   assert.match(app, /swapGroundingStep/);
   assert.match(app, /id="ground-answer"/);
-  assert.match(app, /把眼睛从手机上抬起来，环顾四周，在你所在的地方找/);
+  assert.match(app, /看见", prompt: "(?:环顾|扫一眼|看看)四周/);
+  assert.doesNotMatch(app, /把眼睛从手机上抬起来/);
   assert.match(app, /先不用看手机，听听四周，在你所在的地方找/);
   assert.match(app, /primaryDisabled/);
   assert.match(app, /button\.disabled = !hasAnswer/);
@@ -85,8 +86,15 @@ test("the emergency route has active, focused stages and an always-available hum
   assert.doesNotMatch(app, /id="wait-trace-board"|getPointAtLength|followWaitTrace/);
   assert.match(app, /现在只按一下。接下来的事，我们一件一件来/);
   assert.doesNotMatch(app, /<p class="home-note">我也经历过惊恐/);
+  assert.match(app, /data-action="start-game"/);
+  assert.match(app, /直接玩小游戏/);
+  assert.match(app, /亮窗记忆 \/ 擦开图景/);
   assert.match(app, /data-action="support-swap"/);
   assert.match(app, /再给我一句/);
+  assert.match(app, /var DEFAULT_WORDS = \[\s*"怕可以在这里，我也可以在这里。"/);
+  assert.doesNotMatch(app, /var DEFAULT_WORDS = \[\s*"那又怎样？"/);
+  assert.match(app, /惊恐想夺取我全部注意力，我偏要留一点给眼前/);
+  assert.match(app, /哪怕只松开一点点，也值得我鼓励自己/);
   assert.match(app, /那又怎样？/);
   assert.match(app, /我以前都挺过去了，这次也会的/);
   assert.match(css, /touch-echo-spread/);
@@ -130,6 +138,9 @@ test("time copy avoids promises the tool cannot make", () => {
   assert.match(app, /难受是真的，危险未必是真的/);
   assert.match(app, /每次发作都给你一回练习机会/);
   assert.match(app, /经验就在这些时刻慢慢攒起来/);
+  assert.match(app, /这一回没有时间要求，照自己的步调来/);
+  assert.match(app, /哪怕只进步一点，也值得好好鼓励自己/);
+  assert.doesNotMatch(app, /十分钟只是数字，拿它给自己打分很吃亏/);
   assert.match(secondFearNote, /这样的经验很宝贵/);
   assert.doesNotMatch(app, /你没事(?:的)?|十分钟。它开始退了|峰值通常在十分钟前后|每一次都会退/);
   assert.match(app, /Date\.now\(\)/);

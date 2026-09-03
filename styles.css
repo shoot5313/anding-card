@@ -1325,6 +1325,50 @@ textarea:focus {
   grid-template-columns: 1fr 1fr;
 }
 
+.choice-shortcuts {
+  display: grid;
+  width: 100%;
+  max-width: 420px;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 9px;
+}
+
+.choice-shortcut {
+  display: flex;
+  min-height: 66px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 18px;
+  background: rgba(255, 254, 249, 0.84);
+  box-shadow: 0 5px 14px rgba(25, 62, 48, 0.06);
+  color: var(--sea-glass-deep);
+  line-height: 1.35;
+}
+
+.choice-shortcut--game {
+  border-color: rgba(116, 143, 197, 0.38);
+  background: linear-gradient(120deg, rgba(231, 235, 247, 0.94), rgba(217, 238, 224, 0.82));
+}
+
+.choice-shortcut strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.choice-shortcut small {
+  margin-top: 3px;
+  color: var(--paper-faint);
+  font-size: 10px;
+}
+
+.choice-shortcut:active {
+  border-color: rgba(39, 95, 73, 0.52);
+  background: var(--mint-soft);
+}
+
 .choice-button {
   display: flex;
   min-height: 88px;
@@ -2586,6 +2630,12 @@ canvas {
 
   .choice-button span {
     font-size: 16px;
+  }
+
+  .choice-shortcut {
+    min-height: 58px;
+    padding-top: 6px;
+    padding-bottom: 6px;
   }
 
   .wait-activity {

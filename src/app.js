@@ -21,22 +21,42 @@
   var cacheTimer = null;
   var navigating = false;
 
-  var LEGACY_DEFAULT_WORDS = [
-    "怕也没关系，不用把它赶走。",
-    "这些感觉很难受，但感觉不是命令。",
-    "先把这一分钟交给时间；下一分钟来了，再过下一分钟。",
+  var LEGACY_DEFAULT_WORD_SETS = [
+    [
+      "怕也没关系，不用把它赶走。",
+      "这些感觉很难受，但感觉不是命令。",
+      "先把这一分钟交给时间；下一分钟来了，再过下一分钟。",
+    ],
+    [
+      "那又怎样？",
+      "我以前都挺过去了，这次也会的。",
+      "我能处理。按照自己的步调，一次一小步。",
+    ],
   ];
 
   var DEFAULT_WORDS = [
-    "那又怎样？",
+    "怕可以在这里，我也可以在这里。",
     "我以前都挺过去了，这次也会的。",
     "我能处理。按照自己的步调，一次一小步。",
   ];
 
   var LIVED_EXTRA_WORDS = [
-    "我正在学着与焦虑和恐惧做朋友。",
-    "惊恐，来吧。你可以在这里，我也在这里。",
+    "哦，是你。来吧，老朋友，坐一会儿。",
+    "惊恐想夺取我全部注意力，我偏要留一点给眼前。",
+    "感觉很强，结论可以晚一点。",
+    "它催它的，我照自己的步调走。",
+    "老朋友，你先坐着。我把这一分钟过完。",
+    "怕着也能往前走，这就是我正在练的功夫。",
+    "今天少检查一次，这回就练到了一步。",
+    "今天少逃一步，这一步会留在脚下。",
+    "这一阵会变化，我留在这里亲眼看看。",
+    "每走过一回，我手里就多一份经验。",
+    "来都来了，让我看看你还有什么花样。",
+    "惊恐可以待着，我继续做眼前这一件事。",
+    "这一分钟先过完。下一分钟来了，再接着走。",
+    "哪怕只松开一点点，也值得我鼓励自己。",
     "来吧，惊恐。你就这点本事吗？",
+    "那又怎样？我听见了，先让它坐会儿。",
   ];
 
   var PRACTICE_OPTIONS = {
@@ -80,13 +100,13 @@
 
   var GROUNDING_POOLS = {
     see: [
-      { sense: "看见", prompt: "找一样有直边的东西。它是什么？", button: "找到了" },
-      { sense: "看见", prompt: "找一样圆的，或带弧线的东西。它是什么？", button: "找到了" },
-      { sense: "看见", prompt: "找一个上面有字的地方。最短的词是什么？", button: "找到了" },
-      { sense: "看见", prompt: "找两样颜色不同的东西。是哪两种颜色？", button: "找到了" },
-      { sense: "看见", prompt: "先看最远的一样，再看最近的一样。写下其中一个。", button: "都找到了" },
-      { sense: "看见", prompt: "找一个影子、亮点或反光。它落在哪里？", button: "找到了" },
-      { sense: "看见", prompt: "找一样比手掌小的东西。它是什么？", button: "找到了" },
+      { sense: "看见", prompt: "环顾四周，找一样有直边的东西。它是什么？", button: "找到了" },
+      { sense: "看见", prompt: "环顾四周，找一样圆的，或带弧线的东西。它是什么？", button: "找到了" },
+      { sense: "看见", prompt: "环顾四周，找一个上面有字的地方。最短的词是什么？", button: "找到了" },
+      { sense: "看见", prompt: "环顾四周，找两样颜色不同的东西。是哪两种颜色？", button: "找到了" },
+      { sense: "看见", prompt: "看看四周，先看最远的一样，再看最近的一样。写下其中一个。", button: "都找到了" },
+      { sense: "看见", prompt: "环顾四周，找一个影子、亮点或反光。它落在哪里？", button: "找到了" },
+      { sense: "看见", prompt: "环顾四周，找一样比手掌小的东西。它是什么？", button: "找到了" },
       { sense: "看见", prompt: "扫一眼四周，找一样能移动的东西。它是什么？", button: "找到了" },
     ],
     touch: [
@@ -300,7 +320,12 @@
       draft.sceneTemperature = DEFAULT_DRAFT.sceneTemperature;
       draft.sceneSound = DEFAULT_DRAFT.sceneSound;
     }
-    if (sameWords(draft.words, LEGACY_DEFAULT_WORDS)) draft.words = DEFAULT_WORDS.slice();
+    for (var index = 0; index < LEGACY_DEFAULT_WORD_SETS.length; index += 1) {
+      if (sameWords(draft.words, LEGACY_DEFAULT_WORD_SETS[index])) {
+        draft.words = DEFAULT_WORDS.slice();
+        break;
+      }
+    }
     return draft;
   }
 
@@ -834,7 +859,10 @@
       '<button class="choice-button" type="button" data-action="choose-need" data-need="unreal"><span>周围不真实</span><small>像隔着一层</small></button>',
       '<button class="choice-button" type="button" data-action="choose-need" data-need="control"><span>怕会失控</span><small>怕自己撑不住</small></button>',
       "</div>",
-      '<button class="quiet-link choice-unclear" type="button" data-action="choose-need" data-need="unclear">说不清，直接陪我&nbsp;→</button>',
+      '<div class="choice-shortcuts">',
+      '<button class="choice-shortcut choice-shortcut--game" type="button" data-action="start-game"><strong>直接玩小游戏</strong><small>亮窗记忆 / 擦开图景</small></button>',
+      '<button class="choice-shortcut" type="button" data-action="choose-need" data-need="unclear"><strong>说不清</strong><small>直接陪我</small></button>',
+      "</div>",
       "</div>",
       "</section>",
     ].join("");
@@ -947,6 +975,7 @@
   function renderGround() {
     var step = state.groundSteps[state.groundIndex] || state.groundSteps[0];
     var answerEcho = groundingAnswerEcho();
+    var context = groundingContext(step.sense);
     var body = [
       '<div class="grounding-object grounding-object--',
       groundingVisualClass(step.sense),
@@ -954,8 +983,10 @@
       '<span class="grounding-sense" id="grounding-sense">',
       escapeHtml(step.sense),
       "</span>",
-      '<p class="grounding-context" id="grounding-context">',
-      escapeHtml(groundingContext(step.sense)),
+      '<p class="grounding-context" id="grounding-context"',
+      context ? "" : " hidden",
+      ">",
+      escapeHtml(context),
       "</p>",
       '<h1 class="grounding-prompt" id="grounding-prompt" aria-live="polite">',
       escapeHtml(step.prompt),
@@ -973,7 +1004,7 @@
     var secondary = [
       '<div class="grounding-secondary">',
       '<button class="quiet-link" type="button" data-action="ground-swap" aria-label="当前任务不合适，换一个同类任务">换一个&nbsp;↻</button>',
-      '<button class="quiet-link" type="button" data-action="skip" data-next="wait">跳过这步&nbsp;→</button>',
+      '<button class="quiet-link" type="button" data-action="start-game">直接玩小游戏&nbsp;→</button>',
       "</div>",
     ].join("");
     return calmScreen("落地", body, step.button, "ground-next", "", secondary, true, true)
@@ -1248,7 +1279,7 @@
       '<section class="info-section"><h2>难受是真的，危险未必是真的</h2><p>惊恐一来，身体的警报会把注意力抓住。如果这些反应已经就医排查过，你也熟悉它们，那么感觉很强烈，和眼前真的有危险是两回事。它的第一招，就是把你的目光牢牢按在心跳、呼吸和最坏的念头上。</p></section>',
       '<section class="info-section"><h2>它靠注意力长大</h2><p>身体先起一阵反应，脑子立刻追问：“是不是要出事？”接着反复检查、赶紧逃开、催它马上停。这些动作又在告诉身体：警报是对的，危险很近。第二层恐惧就这样把第一层反应越抬越高。你只是被这个循环卷进去了。</p></section>',
       '<section class="info-section"><h2>老朋友又来了</h2><p>下一次惊恐露面，可以先认出它：“哦，是你。来吧，老朋友。你坐一会儿，我也留在这里。”欢迎它，能省下赶它出门的力气。</p><p>每次发作都给你一回练习机会。书能给方向，路还得亲自走。惊恐冲上来时，少检查一次，少逃一步，亲眼看着感觉怎样变化。要对付的是那道“它一来我就必须逃”的命令。</p><blockquote class="paper-tiger-line">克服惊恐，要把道理带进一次次发作里。<br>经验就在这些时刻慢慢攒起来。</blockquote></section>',
-      '<section class="info-section"><h2>把经验带走</h2><p>一次练习未必马上让感觉变轻。强烈感觉通常会缓下来，每个人走完这一阵的时间各不相同。十分钟只是数字，拿它给自己打分很吃亏。今天只少跟着警报跑一步，这一步也会留在脚下。</p></section>',
+      '<section class="info-section"><h2>把经验带走</h2><p>一次练习未必马上让感觉变轻。强烈感觉通常会缓下来，每个人走完这一阵的时间各不相同。这一回没有时间要求，照自己的步调来。今天能少跟着警报跑一步，哪怕只进步一点，也值得好好鼓励自己。</p></section>',
       '<section class="info-section">',
       '<h2>可以慢慢读的书</h2>',
       '<ul class="book-list">',
@@ -1396,7 +1427,7 @@
   }
 
   function groundingContext(sense) {
-    if (sense === "看见") return "把眼睛从手机上抬起来，环顾四周，在你所在的地方找。";
+    if (sense === "看见") return "";
     if (sense === "听见") return "先不用看手机，听听四周，在你所在的地方找。";
     if (sense === "触碰") return "把手伸向身边，在你所在的地方找。";
     if (sense === "闻到") return "留意你所在的地方和手边的东西。";
@@ -1936,7 +1967,9 @@
     object.className = "grounding-object grounding-object--" + groundingVisualClass(step.sense);
     restartClassAnimation(object, "is-settling");
     sense.textContent = step.sense;
-    context.textContent = groundingContext(step.sense);
+    var contextCopy = groundingContext(step.sense);
+    context.textContent = contextCopy;
+    context.hidden = !contextCopy;
     prompt.textContent = step.prompt;
     restartClassAnimation(prompt, "is-settling");
     button.textContent = step.button;
@@ -2356,6 +2389,9 @@
     if (action === "start") {
       resetEmergencyRun();
       navigate("checkin");
+    } else if (action === "start-game") {
+      if (!state.waitStartedAt) state.waitStartedAt = Date.now();
+      navigate("wait");
     } else if (action === "calm") {
       navigate("calm");
     } else if (action === "open-learn") {
